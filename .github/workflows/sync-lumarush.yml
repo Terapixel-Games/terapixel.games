@@ -54,7 +54,7 @@ jobs:
       - name: Checkout LumaRush
         uses: actions/checkout@v4
         with:
-          repository: TeraPixel/LumaRush
+          repository: TeraPixelGames/LumaRush
           ref: ${{ steps.vars.outputs.ref }}
           path: _lumarush
 
