@@ -3,11 +3,15 @@ import type { Game } from '../types';
 
 interface Props {
   game: Game;
+  playMode?: 'detail' | 'fullscreen';
 }
 
-const { game } = Astro.props;
+const { game, playMode = 'detail' } = Astro.props;
 const detailHref = `/${game.slug}`;
 const isPlayable = Boolean(game.embedUrl || game.fullScreenUrl) && !game.isComingSoon;
+const playHref = playMode === 'fullscreen' && game.fullScreenUrl ? game.fullScreenUrl : detailHref;
+const playTarget = playMode === 'fullscreen' && game.fullScreenUrl ? '_blank' : undefined;
+const playRel = playMode === 'fullscreen' && game.fullScreenUrl ? 'noreferrer noopener' : undefined;
 ---
 
 <article class="space-y-4">
@@ -17,7 +21,7 @@ const isPlayable = Boolean(game.embedUrl || game.fullScreenUrl) && !game.isComin
         <img
           src={game.image}
           alt={game.title}
-          class="h-52 w-full object-cover"
+          class="h-52 w-full border border-zinc-200 object-cover"
           loading="lazy"
           onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
         />
@@ -26,7 +30,7 @@ const isPlayable = Boolean(game.embedUrl || game.fullScreenUrl) && !game.isComin
       <img
         src={game.image}
         alt={game.title}
-        class="h-52 w-full object-cover"
+        class="h-52 w-full border border-zinc-200 object-cover"
         loading="lazy"
         onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
       />
@@ -34,14 +38,14 @@ const isPlayable = Boolean(game.embedUrl || game.fullScreenUrl) && !game.isComin
   }
 
   <div class="space-y-2 text-center">
-    <h2 class="text-2xl font-normal">{game.title}</h2>
+    <h2 class="text-[2rem] font-light leading-tight text-zinc-900">{game.title}</h2>
     {
       isPlayable ? (
-        <a href={detailHref} class="text-base underline underline-offset-4">
+        <a href={playHref} target={playTarget} rel={playRel} class="text-base underline underline-offset-4">
           Play Now
         </a>
       ) : (
-        <span class="text-base text-zinc-400">Coming Soon</span>
+        <span class="text-base text-zinc-500">Coming Soon</span>
       )
     }
   </div>
