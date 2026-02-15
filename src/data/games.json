@@ -1,66 +1,66 @@
 [
-    {
-        "title":  "ScrollSort",
-        "slug":  "scrollsort",
-        "image":  "/images/games/scrollsort.jpg",
-        "fullScreenUrl":  null,
-        "embedUrl":  null,
-        "isComingSoon":  true
-    },
-    {
-        "title":  "LumaRush",
-        "slug":  "lumarush",
-        "image":  "/images/games/lumarush.jpg",
-        "fullScreenUrl":  "/play/lumarush/",
-        "embedUrl":  "/play/lumarush/"
-    },
-    {
-        "title":  "Wormhole Raiders",
-        "slug":  "wormhole-raiders",
-        "image":  "/images/games/wormhole-raiders.jpg",
-        "fullScreenUrl":  "https://terapixelgames.github.io/wormhole_raiders/",
-        "embedUrl":  "https://terapixelgames.github.io/wormhole_raiders/"
-    },
-    {
-        "title":  "Color Crunch",
-        "slug":  "color-crunch",
-        "image":  "/images/games/color-crunch.jpg",
-        "fullScreenUrl":  "https://terapixelgames.github.io/color_crunch/",
-        "embedUrl":  "https://terapixelgames.github.io/color_crunch/"
-    },
-    {
-        "title":  "Block Forge",
-        "slug":  "block-forge",
-        "image":  "/images/games/block-forge.jpg",
-        "fullScreenUrl":  "https://terapixelgames.github.io/block_forge/",
-        "embedUrl":  "https://terapixelgames.github.io/block_forge/"
-    },
-    {
-        "title":  "SumSlide",
-        "slug":  "sumslide",
-        "image":  "/images/games/sumslide.jpg",
-        "fullScreenUrl":  null,
-        "embedUrl":  null
-    },
-    {
-        "title":  "Worm Breaker",
-        "slug":  "worm-breaker",
-        "image":  "/images/games/worm-breaker.jpg",
-        "fullScreenUrl":  null,
-        "embedUrl":  null
-    },
-    {
-        "title":  "GloBlocks",
-        "slug":  "globlocks",
-        "image":  "/images/games/globlocks.jpg",
-        "fullScreenUrl":  null,
-        "embedUrl":  null
-    },
-    {
-        "title":  "SpeedSolitaire",
-        "slug":  "speedsolitaire",
-        "image":  "/images/games/speedsolitaire.jpg",
-        "fullScreenUrl":  null,
-        "embedUrl":  null
-    }
+  {
+    "title": "ScrollSort",
+    "slug": "scrollsort",
+    "image": "/images/games/scrollsort.jpg",
+    "fullScreenUrl": null,
+    "embedUrl": null,
+    "isComingSoon": true
+  },
+  {
+    "title": "LumaRush",
+    "slug": "lumarush",
+    "image": "/images/games/lumarush.jpg",
+    "fullScreenUrl": "/play/lumarush/",
+    "embedUrl": "/play/lumarush/"
+  },
+  {
+    "title": "Wormhole Raiders",
+    "slug": "wormhole-raiders",
+    "image": "/images/games/wormhole-raiders.jpg",
+    "fullScreenUrl": "https://terapixelgames.github.io/wormhole_raiders/",
+    "embedUrl": "https://terapixelgames.github.io/wormhole_raiders/"
+  },
+  {
+    "title": "Color Crunch",
+    "slug": "color-crunch",
+    "image": "/images/games/color-crunch.jpg",
+    "fullScreenUrl": "https://terapixelgames.github.io/color_crunch/",
+    "embedUrl": "https://terapixelgames.github.io/color_crunch/"
+  },
+  {
+    "title": "Block Forge",
+    "slug": "block-forge",
+    "image": "/images/games/block-forge.jpg",
+    "fullScreenUrl": "https://terapixelgames.github.io/block_forge/",
+    "embedUrl": "https://terapixelgames.github.io/block_forge/"
+  },
+  {
+    "title": "SumSlide",
+    "slug": "sumslide",
+    "image": "/images/games/sumslide.jpg",
+    "fullScreenUrl": null,
+    "embedUrl": null
+  },
+  {
+    "title": "Worm Breaker",
+    "slug": "worm-breaker",
+    "image": "/images/games/worm-breaker.jpg",
+    "fullScreenUrl": null,
+    "embedUrl": null
+  },
+  {
+    "title": "GloBlocks",
+    "slug": "globlocks",
+    "image": "/images/games/globlocks.jpg",
+    "fullScreenUrl": null,
+    "embedUrl": null
+  },
+  {
+    "title": "SpeedSolitaire",
+    "slug": "speedsolitaire",
+    "image": "/images/games/speedsolitaire.jpg",
+    "fullScreenUrl": null,
+    "embedUrl": null
+  }
 ]
