@@ -24,6 +24,7 @@ const canonicalHref = Astro.site
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalHref} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <slot name="head" />
   </head>
   <body class="min-h-screen bg-surface text-zinc-100 antialiased">
     <Nav pathname={Astro.url.pathname} />
