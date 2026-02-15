@@ -1,29 +1,36 @@
 ---
 const { pathname = '/games' } = Astro.props;
 
+const logoUrl =
+  'https://lh3.googleusercontent.com/sitesv/APaQ0SQpb2N1PxGF7N9Iepr_9UbAKup_lJOLK5xjljlAfp4tEhTkxYPqfdu14ETCaiX-pzs4EswA481TbQqKx00S_xDyTkmafajnzGMW6mSLlXTD9HgchqxI_cqpCsNb0_yE13WADpRMlGVrHle3pEVGZwezAW989u6JHGE9Xr8SgvJpIfC-yY4o0ClcwiQ=w16383';
+
 const links = [
   { href: '/games', label: 'Games' },
   { href: '/contact', label: 'Contact' }
 ];
 ---
 
-<header class="sticky top-0 z-50 border-b border-border/80 bg-surface/95 backdrop-blur">
+<header class="sticky top-0 z-50 border-b border-zinc-800 bg-black/95">
   <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4">
-    <a href="/games" class="text-lg font-semibold tracking-tight">Terapixel Games</a>
+    <a href="/games" class="flex items-center gap-3">
+      <img
+        src={logoUrl}
+        alt="Terapixel"
+        class="h-7 w-7 rounded-sm object-cover"
+        loading="eager"
+        onerror="this.style.display='none';"
+      />
+      <span class="text-base text-zinc-100">Terapixel.games</span>
+    </a>
+
     <nav aria-label="Main navigation">
-      <ul class="flex items-center gap-2">
+      <ul class="flex items-center gap-5 text-sm text-zinc-300">
         {
           links.map((link) => {
             const active = pathname === link.href || (link.href === '/games' && pathname === '/');
             return (
               <li>
-                <a
-                  href={link.href}
-                  class:list={[
-                    'rounded-md px-3 py-2 text-sm transition-colors',
-                    active ? 'bg-zinc-200 text-zinc-950' : 'text-zinc-300 hover:bg-panel hover:text-zinc-100'
-                  ]}
-                >
+                <a href={link.href} class:list={[active ? 'text-white underline underline-offset-4' : 'hover:text-white']}>
                   {link.label}
                 </a>
               </li>

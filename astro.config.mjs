@@ -1,10 +1,10 @@
 // Canonical production domain for this site:
-// https://www.terapixel.games
+// https://terapixel.games
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://www.terapixel.games',
+  site: 'https://terapixel.games',
   integrations: [tailwind()],
   output: 'static'
 });

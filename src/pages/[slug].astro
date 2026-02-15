@@ -17,17 +17,17 @@ const showFullScreen = Boolean(game.fullScreenUrl);
 ---
 
 <BaseLayout title={game.title} description={`Play ${game.title} on Terapixel Games.`}>
-  <section class="space-y-6">
-    <h1 class="text-3xl font-bold tracking-tight">{game.title}</h1>
+  <section class="space-y-7">
+    <h1 class="text-center text-4xl font-normal">{game.title}</h1>
 
     {
       showEmbed ? (
-        <div class="overflow-hidden rounded-xl border border-border bg-panel p-3">
+        <div class="mx-auto max-w-5xl overflow-hidden border border-zinc-800 bg-zinc-950 p-2">
           <div class="relative w-full" style="padding-top: 56.25%;">
             <iframe
               src={game.embedUrl as string}
               title={`${game.title} game`}
-              class="absolute inset-0 h-full w-full rounded-md"
+              class="absolute inset-0 h-full w-full"
               loading="lazy"
               allow="fullscreen"
               allowfullscreen
@@ -35,30 +35,21 @@ const showFullScreen = Boolean(game.fullScreenUrl);
           </div>
         </div>
       ) : (
-        <div class="rounded-xl border border-border bg-panel p-8 text-zinc-300">Coming Soon</div>
+        <p class="text-center text-zinc-400">Coming Soon</p>
       )
     }
 
-    <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap items-center justify-center gap-6 text-base">
       {
         showFullScreen ? (
-          <a
-            href={game.fullScreenUrl as string}
-            target="_blank"
-            rel="noreferrer noopener"
-            class="inline-flex rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-300"
-          >
+          <a href={game.fullScreenUrl as string} target="_blank" rel="noreferrer noopener" class="underline underline-offset-4">
             Full Screen
           </a>
         ) : (
-          <span class="inline-flex cursor-not-allowed rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-400">
-            Coming Soon
-          </span>
+          <span class="text-zinc-400">Coming Soon</span>
         )
       }
-      <a href="/games" class="inline-flex rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-900">
-        Back to Games
-      </a>
+      <a href="/games" class="underline underline-offset-4 text-zinc-300 hover:text-white">Back to Games</a>
     </div>
   </section>
 </BaseLayout>

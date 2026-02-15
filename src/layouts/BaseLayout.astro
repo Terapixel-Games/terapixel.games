@@ -9,7 +9,7 @@ interface Props {
 
 const { title, description = 'Play browser games from Terapixel Games.' } = Astro.props;
 
-// Canonical URLs are generated from astro.config.mjs site = https://www.terapixel.games
+// Canonical URLs are generated from astro.config.mjs site = https://terapixel.games
 const canonicalHref = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).toString()
   : Astro.url.toString();
@@ -26,9 +26,9 @@ const canonicalHref = Astro.site
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <slot name="head" />
   </head>
-  <body class="min-h-screen bg-surface text-zinc-100 antialiased">
+  <body class="min-h-screen bg-black text-white antialiased">
     <Nav pathname={Astro.url.pathname} />
-    <main class="mx-auto w-full max-w-6xl px-4 py-10">
+    <main class="mx-auto w-full max-w-6xl px-4 py-12">
       <slot />
     </main>
   </body>
