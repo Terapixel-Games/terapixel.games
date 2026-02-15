@@ -1,0 +1,52 @@
+---
+import type { Game } from '../types';
+
+interface Props {
+  game: Game;
+}
+
+const { game } = Astro.props;
+const detailHref = `/${game.slug}`;
+const isPlayable = Boolean(game.embedUrl || game.fullScreenUrl) && !game.isComingSoon;
+---
+
+<article class="overflow-hidden rounded-xl border border-border bg-panel shadow-sm shadow-black/25">
+  {
+    isPlayable ? (
+      <a href={detailHref} class="block">
+        <img
+          src={game.image}
+          alt={game.title}
+          class="h-48 w-full object-cover"
+          loading="lazy"
+          onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
+        />
+      </a>
+    ) : (
+      <img
+        src={game.image}
+        alt={game.title}
+        class="h-48 w-full object-cover"
+        loading="lazy"
+        onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
+      />
+    )
+  }
+  <div class="space-y-3 p-4">
+    <h2 class="text-lg font-semibold">{game.title}</h2>
+    {
+      isPlayable ? (
+        <a
+          href={detailHref}
+          class="inline-flex rounded-md bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-300"
+        >
+          Play Now
+        </a>
+      ) : (
+        <span class="inline-flex cursor-not-allowed rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-400">
+          Coming Soon
+        </span>
+      )
+    }
+  </div>
+</article>

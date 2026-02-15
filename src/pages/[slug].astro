@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import games from '../data/games.json';
+import type { Game } from '../types';
+
+export function getStaticPaths() {
+  const gameList = games as Game[];
+  return gameList.map((game) => ({
+    params: { slug: game.slug },
+    props: { game }
+  }));
+}
+
+const { game } = Astro.props as { game: Game };
+const showEmbed = Boolean(game.embedUrl);
+const showFullScreen = Boolean(game.fullScreenUrl);
+---
+
+<BaseLayout title={game.title} description={`Play ${game.title} on Terapixel Games.`}>
+  <section class="space-y-6">
+    <h1 class="text-3xl font-bold tracking-tight">{game.title}</h1>
+
+    {
+      showEmbed ? (
+        <div class="overflow-hidden rounded-xl border border-border bg-panel p-3">
+          <div class="relative w-full" style="padding-top: 56.25%;">
+            <iframe
+              src={game.embedUrl as string}
+              title={`${game.title} game`}
+              class="absolute inset-0 h-full w-full rounded-md"
+              loading="lazy"
+              allow="fullscreen"
+              allowfullscreen
+            />
+          </div>
+        </div>
+      ) : (
+        <div class="rounded-xl border border-border bg-panel p-8 text-zinc-300">Coming Soon</div>
+      )
+    }
+
+    <div class="flex flex-wrap gap-3">
+      {
+        showFullScreen ? (
+          <a
+            href={game.fullScreenUrl as string}
+            target="_blank"
+            rel="noreferrer noopener"
+            class="inline-flex rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-300"
+          >
+            Full Screen
+          </a>
+        ) : (
+          <span class="inline-flex cursor-not-allowed rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-400">
+            Coming Soon
+          </span>
+        )
+      }
+      <a href="/games" class="inline-flex rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-900">
+        Back to Games
+      </a>
+    </div>
+  </section>
+</BaseLayout>

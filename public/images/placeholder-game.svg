@@ -1,0 +1,18 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Game placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#181818"/>
+      <stop offset="100%" stop-color="#2b2b2b"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <g fill="#9a9a9a">
+    <rect x="208" y="124" width="224" height="112" rx="12" fill="#232323" stroke="#3a3a3a"/>
+    <circle cx="276" cy="180" r="22"/>
+    <rect x="314" y="164" width="82" height="12" rx="6"/>
+    <rect x="314" y="186" width="62" height="10" rx="5"/>
+  </g>
+  <text x="320" y="286" text-anchor="middle" fill="#d0d0d0" font-size="24" font-family="Arial, sans-serif">
+    Terapixel Game
+  </text>
+</svg>

@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GameCard from '../components/GameCard.astro';
+import games from '../data/games.json';
+import type { Game } from '../types';
+
+const gameList = games as Game[];
+---
+
+<BaseLayout title="Games" description="Explore Terapixel Games and play directly in your browser.">
+  <section class="space-y-6">
+    <h1 class="text-3xl font-bold tracking-tight">Games</h1>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {gameList.map((game) => <GameCard game={game} />)}
+    </div>
+  </section>
+</BaseLayout>
