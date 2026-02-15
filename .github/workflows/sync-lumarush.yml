@@ -8,14 +8,18 @@ on:
         required: false
         default: "main"
       lumarush_build_dir:
-        description: "Build directory inside LumaRush repo"
+        description: "Web export output dir inside LumaRush checkout"
         required: false
-        default: "build/web_publish_check"
+        default: "build/web"
   repository_dispatch:
     types: [lumarush_main_updated]
 
 permissions:
   contents: write
+
+env:
+  GODOT_VERSION: "4.5.1"
+  GODOT_STATUS: "stable"
 
 jobs:
   sync:
@@ -35,7 +39,6 @@ jobs:
           if [ -z "$REF" ]; then
             REF="${{ inputs.lumarush_ref }}"
           fi
-
           if [ -z "$REF" ]; then
             REF="main"
           fi
@@ -43,9 +46,8 @@ jobs:
           if [ -z "$BUILD_DIR" ]; then
             BUILD_DIR="${{ inputs.lumarush_build_dir }}"
           fi
-
           if [ -z "$BUILD_DIR" ]; then
-            BUILD_DIR="build/web_publish_check"
+            BUILD_DIR="build/web"
           fi
 
           echo "ref=$REF" >> "$GITHUB_OUTPUT"
@@ -58,10 +60,68 @@ jobs:
           ref: ${{ steps.vars.outputs.ref }}
           path: _lumarush
 
+      - name: Install Godot Headless + Export Templates
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y unzip wget
+
+          GODOT_BASE="Godot_v${GODOT_VERSION}-${GODOT_STATUS}"
+          HEADLESS_ZIP="${GODOT_BASE}_linux.x86_64.zip"
+          TEMPLATES_TPZ="${GODOT_BASE}_export_templates.tpz"
+
+          wget -O /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/${HEADLESS_ZIP}"
+          unzip -o /tmp/godot.zip -d /tmp/godot-bin
+          chmod +x "/tmp/godot-bin/${GODOT_BASE}_linux.x86_64"
+          echo "GODOT_BIN=/tmp/godot-bin/${GODOT_BASE}_linux.x86_64" >> "$GITHUB_ENV"
+
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}"
+          mkdir -p "$TEMPLATE_DIR"
+          wget -O /tmp/export_templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/${TEMPLATES_TPZ}"
+          unzip -o /tmp/export_templates.tpz -d /tmp/godot-templates
+          find /tmp/godot-templates -type f -name "*.zip" -exec cp {} "$TEMPLATE_DIR/" \;
+
+      - name: Disable Editor Plugins For CI Export
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd _lumarush
+          sed -i 's/^enabled=PackedStringArray(.*/enabled=PackedStringArray()/g' project.godot
+
+      - name: Disable Ad Plugins For Web CI
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd _lumarush
+          if [ -f export_presets.cfg ]; then
+            sed -i 's/^plugins\/AdmobPlugin=true$/plugins\/AdmobPlugin=false/g' export_presets.cfg || true
+          fi
+          if [ -d addons/AdmobPlugin ]; then
+            mv addons/AdmobPlugin addons/_AdmobPlugin_disabled_ci
+          fi
+          if [ -d addons/godot-admob ]; then
+            mv addons/godot-admob addons/_godot-admob_disabled_ci
+          fi
+
+      - name: Import Project
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$GODOT_BIN" --headless --path _lumarush --import --quit
+
+      - name: Export Web Build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p "_lumarush/${{ steps.vars.outputs.build_dir }}"
+          "$GODOT_BIN" --headless --path _lumarush --export-release "Web" "_lumarush/${{ steps.vars.outputs.build_dir }}/index.html"
+
       - name: Validate build output exists
         shell: bash
         run: |
           test -d "_lumarush/${{ steps.vars.outputs.build_dir }}"
+          test -f "_lumarush/${{ steps.vars.outputs.build_dir }}/index.html"
 
       - name: Sync LumaRush build into public/play/lumarush
         shell: bash
