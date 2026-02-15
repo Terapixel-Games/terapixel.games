@@ -11,8 +11,8 @@
         "title":  "LumaRush",
         "slug":  "lumarush",
         "image":  "/images/games/lumarush.jpg",
-        "fullScreenUrl":  "https://terapixelgames.github.io/LumaRush/",
-        "embedUrl":  "https://terapixelgames.github.io/LumaRush/"
+        "fullScreenUrl":  "/play/lumarush/",
+        "embedUrl":  "/play/lumarush/"
     },
     {
         "title":  "Wormhole Raiders",

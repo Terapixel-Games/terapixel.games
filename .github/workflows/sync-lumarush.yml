@@ -1,0 +1,101 @@
+name: Sync LumaRush Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      lumarush_ref:
+        description: "LumaRush git ref to sync (branch/tag/sha)"
+        required: false
+        default: "main"
+      lumarush_build_dir:
+        description: "Build directory inside LumaRush repo"
+        required: false
+        default: "build/web_publish_check"
+  repository_dispatch:
+    types: [lumarush_main_updated]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout terapixel.games
+        uses: actions/checkout@v4
+
+      - name: Resolve payload values
+        id: vars
+        shell: bash
+        run: |
+          REF="${{ github.event.client_payload.ref }}"
+          BUILD_DIR="${{ github.event.client_payload.build_dir }}"
+
+          if [ -z "$REF" ]; then
+            REF="${{ inputs.lumarush_ref }}"
+          fi
+
+          if [ -z "$REF" ]; then
+            REF="main"
+          fi
+
+          if [ -z "$BUILD_DIR" ]; then
+            BUILD_DIR="${{ inputs.lumarush_build_dir }}"
+          fi
+
+          if [ -z "$BUILD_DIR" ]; then
+            BUILD_DIR="build/web_publish_check"
+          fi
+
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "build_dir=$BUILD_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout LumaRush
+        uses: actions/checkout@v4
+        with:
+          repository: TeraPixel/LumaRush
+          ref: ${{ steps.vars.outputs.ref }}
+          path: _lumarush
+
+      - name: Validate build output exists
+        shell: bash
+        run: |
+          test -d "_lumarush/${{ steps.vars.outputs.build_dir }}"
+
+      - name: Sync LumaRush build into public/play/lumarush
+        shell: bash
+        run: |
+          mkdir -p public/play/lumarush
+          rsync -a --delete "_lumarush/${{ steps.vars.outputs.build_dir }}/" public/play/lumarush/
+
+      - name: Set LumaRush URLs to same-domain path
+        shell: bash
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const path = 'src/data/games.json';
+          const games = JSON.parse(fs.readFileSync(path, 'utf8'));
+          for (const game of games) {
+            if (game.slug === 'lumarush') {
+              game.fullScreenUrl = '/play/lumarush/';
+              game.embedUrl = '/play/lumarush/';
+            }
+          }
+          fs.writeFileSync(path, JSON.stringify(games, null, 2) + '\n');
+          EOF
+
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git add public/play/lumarush src/data/games.json
+          git commit -m "sync: update LumaRush web build"
+          git push
