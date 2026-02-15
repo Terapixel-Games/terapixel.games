@@ -3,23 +3,19 @@ name: Sync LumaRush Build
 on:
   workflow_dispatch:
     inputs:
-      lumarush_ref:
-        description: "LumaRush git ref to sync (branch/tag/sha)"
+      release_tag:
+        description: "LumaRush release tag to sync (for example: v1.2.3)"
         required: false
-        default: "main"
-      lumarush_build_dir:
-        description: "Web export output dir inside LumaRush checkout"
+        default: ""
+      release_asset:
+        description: "LumaRush release asset name (optional)"
         required: false
-        default: "build/web"
+        default: ""
   repository_dispatch:
     types: [lumarush_main_updated]
 
 permissions:
   contents: write
-
-env:
-  GODOT_VERSION: "4.5.1"
-  GODOT_STATUS: "stable"
 
 jobs:
   sync:
@@ -33,102 +29,100 @@ jobs:
         id: vars
         shell: bash
         run: |
-          REF="${{ github.event.client_payload.ref }}"
-          BUILD_DIR="${{ github.event.client_payload.build_dir }}"
+          SOURCE_REPO="${{ github.event.client_payload.source_repo }}"
+          RELEASE_TAG="${{ github.event.client_payload.release_tag }}"
+          RELEASE_ASSET="${{ github.event.client_payload.release_asset }}"
 
-          if [ -z "$REF" ]; then
-            REF="${{ inputs.lumarush_ref }}"
-          fi
-          if [ -z "$REF" ]; then
-            REF="main"
+          if [ -z "$SOURCE_REPO" ]; then
+            SOURCE_REPO="TeraPixelGames/LumaRush"
           fi
 
-          if [ -z "$BUILD_DIR" ]; then
-            BUILD_DIR="${{ inputs.lumarush_build_dir }}"
-          fi
-          if [ -z "$BUILD_DIR" ]; then
-            BUILD_DIR="build/web"
+          if [ -z "$RELEASE_TAG" ]; then
+            RELEASE_TAG="${{ inputs.release_tag }}"
           fi
 
-          echo "ref=$REF" >> "$GITHUB_OUTPUT"
-          echo "build_dir=$BUILD_DIR" >> "$GITHUB_OUTPUT"
+          if [ -z "$RELEASE_TAG" ]; then
+            LATEST_JSON=$(curl -sS \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${SOURCE_REPO}/releases/latest")
+            RELEASE_TAG=$(LATEST_JSON="$LATEST_JSON" python -c "import json,os; print(json.loads(os.environ.get('LATEST_JSON','{}')).get('tag_name',''))")
+          fi
 
-      - name: Checkout LumaRush
-        uses: actions/checkout@v4
-        with:
-          repository: TeraPixelGames/LumaRush
-          ref: ${{ steps.vars.outputs.ref }}
-          path: _lumarush
+          if [ -z "$RELEASE_ASSET" ]; then
+            RELEASE_ASSET="${{ inputs.release_asset }}"
+          fi
+          if [ -z "$RELEASE_ASSET" ]; then
+            VERSION="${RELEASE_TAG#v}"
+            RELEASE_ASSET="lumarush-web-${VERSION}.zip"
+          fi
 
-      - name: Install Godot Headless + Export Templates
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "Unable to resolve release tag"
+            exit 1
+          fi
+
+          echo "source_repo=$SOURCE_REPO" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "release_asset=$RELEASE_ASSET" >> "$GITHUB_OUTPUT"
+
+      - name: Download and extract LumaRush release asset
         shell: bash
+        env:
+          READ_TOKEN: ${{ secrets.LUMARUSH_RELEASE_READ_TOKEN }}
         run: |
           set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y unzip wget
+          sudo apt-get install -y unzip rsync
 
-          GODOT_BASE="Godot_v${GODOT_VERSION}-${GODOT_STATUS}"
-          HEADLESS_ZIP="${GODOT_BASE}_linux.x86_64.zip"
-          TEMPLATES_TPZ="${GODOT_BASE}_export_templates.tpz"
+          API_URL="https://api.github.com/repos/${{ steps.vars.outputs.source_repo }}/releases/tags/${{ steps.vars.outputs.release_tag }}"
+          BROWSER_URL=$(python - "$API_URL" "${{ steps.vars.outputs.release_asset }}" "$READ_TOKEN" <<'PY'
+import json
+import sys
+import urllib.request
 
-          wget -O /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/${HEADLESS_ZIP}"
-          unzip -o /tmp/godot.zip -d /tmp/godot-bin
-          chmod +x "/tmp/godot-bin/${GODOT_BASE}_linux.x86_64"
-          echo "GODOT_BIN=/tmp/godot-bin/${GODOT_BASE}_linux.x86_64" >> "$GITHUB_ENV"
+api_url = sys.argv[1]
+asset_name = sys.argv[2]
+token = sys.argv[3] if len(sys.argv) > 3 else ""
 
-          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_STATUS}"
-          mkdir -p "$TEMPLATE_DIR"
-          wget -O /tmp/export_templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-${GODOT_STATUS}/${TEMPLATES_TPZ}"
-          unzip -o /tmp/export_templates.tpz -d /tmp/godot-templates
-          find /tmp/godot-templates -type f -name "*.zip" -exec cp {} "$TEMPLATE_DIR/" \;
+headers = {"Accept": "application/vnd.github+json"}
+if token:
+    headers["Authorization"] = f"Bearer {token}"
 
-      - name: Disable Editor Plugins For CI Export
-        shell: bash
-        run: |
-          set -euxo pipefail
-          cd _lumarush
-          sed -i 's/^enabled=PackedStringArray(.*/enabled=PackedStringArray()/g' project.godot
+req = urllib.request.Request(api_url, headers=headers)
+with urllib.request.urlopen(req) as resp:
+    data = json.loads(resp.read().decode("utf-8"))
 
-      - name: Disable Ad Plugins For Web CI
-        shell: bash
-        run: |
-          set -euxo pipefail
-          cd _lumarush
-          if [ -f export_presets.cfg ]; then
-            sed -i 's/^plugins\/AdmobPlugin=true$/plugins\/AdmobPlugin=false/g' export_presets.cfg || true
-          fi
-          if [ -d addons/AdmobPlugin ]; then
-            mv addons/AdmobPlugin addons/_AdmobPlugin_disabled_ci
-          fi
-          if [ -d addons/godot-admob ]; then
-            mv addons/godot-admob addons/_godot-admob_disabled_ci
+for asset in data.get("assets", []):
+    if asset.get("name") == asset_name:
+        print(asset.get("browser_download_url", ""))
+        break
+PY
+          )
+
+          if [ -z "$BROWSER_URL" ]; then
+            echo "Release asset not found: ${{ steps.vars.outputs.release_asset }}"
+            exit 1
           fi
 
-      - name: Import Project
-        shell: bash
-        run: |
-          set -euxo pipefail
-          "$GODOT_BIN" --headless --path _lumarush --import --quit
+          AUTH_HEADER=()
+          if [ -n "${READ_TOKEN:-}" ]; then
+            AUTH_HEADER=(-H "Authorization: Bearer ${READ_TOKEN}")
+          fi
 
-      - name: Export Web Build
-        shell: bash
-        run: |
-          set -euxo pipefail
-          cd _lumarush
-          mkdir -p "${{ steps.vars.outputs.build_dir }}"
-          "$GODOT_BIN" --headless --path . --export-release "Web" "${{ steps.vars.outputs.build_dir }}/index.html"
+          curl -sS -L "${AUTH_HEADER[@]}" \
+            -o /tmp/lumarush-web.zip \
+            "$BROWSER_URL"
 
-      - name: Validate build output exists
-        shell: bash
-        run: |
-          test -d "_lumarush/${{ steps.vars.outputs.build_dir }}"
-          test -f "_lumarush/${{ steps.vars.outputs.build_dir }}/index.html"
+          rm -rf /tmp/lumarush-build
+          mkdir -p /tmp/lumarush-build
+          unzip -o /tmp/lumarush-web.zip -d /tmp/lumarush-build
+          test -f /tmp/lumarush-build/build/web/index.html
 
       - name: Sync LumaRush build into public/play/lumarush
         shell: bash
         run: |
           mkdir -p public/play/lumarush
-          rsync -a --delete "_lumarush/${{ steps.vars.outputs.build_dir }}/" public/play/lumarush/
+          rsync -a --delete "/tmp/lumarush-build/build/web/" public/play/lumarush/
 
       - name: Set LumaRush URLs to same-domain path
         shell: bash
