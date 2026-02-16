@@ -5,14 +5,17 @@ import Nav from '../components/Nav.astro';
 interface Props {
   title: string;
   description?: string;
+  image?: string;
 }
 
-const { title, description = 'Play browser games from Terapixel Games.' } = Astro.props;
+const { title, description = 'Play browser games from Terapixel Games.', image = '/images/games/lumarush.jpg' } = Astro.props;
 
 // Canonical URLs are generated from astro.config.mjs site = https://terapixel.games
 const canonicalHref = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).toString()
   : Astro.url.toString();
+const imageHref = Astro.site ? new URL(image, Astro.site).toString() : new URL(image, Astro.url).toString();
+const socialTitle = `${title} | Terapixel Games`;
 ---
 
 <!doctype html>
@@ -20,9 +23,19 @@ const canonicalHref = Astro.site
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title} | Terapixel Games</title>
+    <title>{socialTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalHref} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Terapixel Games" />
+    <meta property="og:title" content={socialTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalHref} />
+    <meta property="og:image" content={imageHref} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={socialTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageHref} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,5 +52,14 @@ const canonicalHref = Astro.site
     <main class="mx-auto w-full max-w-6xl px-4 py-12">
       <slot />
     </main>
+    <footer class="border-t border-zinc-200 py-8">
+      <div class="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 text-sm text-zinc-600">
+        <p>&copy; {new Date().getFullYear()} Terapixel Games</p>
+        <div class="flex items-center gap-4">
+          <a href="/privacy-policy" class="underline underline-offset-4 hover:text-zinc-900">Privacy Policy</a>
+          <a href="/contact" class="underline underline-offset-4 hover:text-zinc-900">Contact</a>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

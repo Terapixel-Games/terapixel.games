@@ -3,6 +3,24 @@
     "title": "ScrollSort",
     "slug": "scrollsort",
     "image": "/images/games/scrollsort.jpg",
+    "seoIntro": "ScrollSort is a pattern-based browser puzzle game where quick reading and clean decisions matter.",
+    "seoDetails": "Each run challenges you to scan, sort, and react with precision. If you like logic games that reward focus and speed, ScrollSort delivers short sessions with real replay value.",
+    "seoHowToPlay": "Start each round by identifying the rule in play, then sort items efficiently while avoiding slow or unnecessary moves.",
+    "seoFeatures": [
+      "Fast puzzle rounds built for browser play",
+      "Skill-based progression through better decision making",
+      "Great fit for quick breaks and repeat attempts"
+    ],
+    "faq": [
+      {
+        "question": "Is ScrollSort free to play?",
+        "answer": "Yes. ScrollSort is free to access on Terapixel Games."
+      },
+      {
+        "question": "Does ScrollSort work on mobile browsers?",
+        "answer": "ScrollSort is designed for modern web browsers on desktop and mobile devices."
+      }
+    ],
     "fullScreenUrl": null,
     "embedUrl": null,
     "isComingSoon": true
@@ -11,6 +29,24 @@
     "title": "LumaRush",
     "slug": "lumarush",
     "image": "/images/games/lumarush.jpg",
+    "seoIntro": "LumaRush is a fast-paced web game focused on movement, timing, and staying in control as intensity ramps up.",
+    "seoDetails": "Designed for instant play in your browser, LumaRush combines arcade energy with responsive controls so every run feels skill-driven. It is easy to start and challenging to master.",
+    "seoHowToPlay": "Use movement controls to stay ahead of hazards, maintain rhythm, and push for higher scores with each run.",
+    "seoFeatures": [
+      "Arcade-style gameplay tuned for short sessions",
+      "Smooth controls with immediate feedback",
+      "Repeatable runs ideal for score improvement"
+    ],
+    "faq": [
+      {
+        "question": "Can I play LumaRush instantly in my browser?",
+        "answer": "Yes. LumaRush loads directly in your browser without a separate install."
+      },
+      {
+        "question": "Is fullscreen available for LumaRush?",
+        "answer": "Yes. Use the Full Screen link on the game page for an expanded play view."
+      }
+    ],
     "fullScreenUrl": "/play/lumarush/",
     "embedUrl": "/play/lumarush/"
   },
@@ -18,6 +54,24 @@
     "title": "Wormhole Raiders",
     "slug": "wormhole-raiders",
     "image": "/images/games/wormhole-raiders.jpg",
+    "seoIntro": "Wormhole Raiders is a browser action game built around dodging pressure, quick reactions, and tactical movement.",
+    "seoDetails": "The game rewards players who can stay calm while conditions change quickly. With each attempt, you can refine route choices and improve your survivability.",
+    "seoHowToPlay": "Keep moving, read threats early, and take safe windows when they appear to survive longer and improve your performance.",
+    "seoFeatures": [
+      "Action-focused gameplay that rewards reflexes",
+      "Short rounds with strong replayability",
+      "Runs that encourage constant improvement"
+    ],
+    "faq": [
+      {
+        "question": "What type of game is Wormhole Raiders?",
+        "answer": "Wormhole Raiders is a browser action game focused on reflexes and survival."
+      },
+      {
+        "question": "Do I need to download anything to play Wormhole Raiders?",
+        "answer": "No. You can launch the game from the web using the play links on the game page."
+      }
+    ],
     "fullScreenUrl": "https://terapixelgames.github.io/wormhole_raiders/",
     "embedUrl": "https://terapixelgames.github.io/wormhole_raiders/"
   },
@@ -25,6 +79,24 @@
     "title": "Color Crunch",
     "slug": "color-crunch",
     "image": "/images/games/color-crunch.jpg",
+    "seoIntro": "Color Crunch is a color-matching puzzle game for players who enjoy speed, clarity, and satisfying pattern recognition.",
+    "seoDetails": "As rounds progress, your ability to spot visual cues quickly becomes the difference between average and top performance. It is a strong choice for puzzle fans who enjoy fast feedback.",
+    "seoHowToPlay": "Identify color groups quickly, make clean matches, and keep momentum to build stronger scoring runs.",
+    "seoFeatures": [
+      "Color-based puzzle mechanics with quick rounds",
+      "Easy to learn and challenging at higher pace",
+      "Optimized for instant browser sessions"
+    ],
+    "faq": [
+      {
+        "question": "Is Color Crunch a puzzle game?",
+        "answer": "Yes. Color Crunch is a browser puzzle game based on quick visual matching."
+      },
+      {
+        "question": "Who should play Color Crunch?",
+        "answer": "It is a good fit for players who enjoy fast puzzle sessions and pattern recognition gameplay."
+      }
+    ],
     "fullScreenUrl": "https://terapixelgames.github.io/color_crunch/",
     "embedUrl": "https://terapixelgames.github.io/color_crunch/"
   },
@@ -32,6 +104,24 @@
     "title": "Block Forge",
     "slug": "block-forge",
     "image": "/images/games/block-forge.jpg",
+    "seoIntro": "Block Forge is a browser puzzle game where planning ahead and efficient piece placement are key to success.",
+    "seoDetails": "The game rewards smart positioning and disciplined decisions rather than random moves. Players who enjoy strategic puzzle loops can keep refining their approach over time.",
+    "seoHowToPlay": "Place blocks with future space in mind, prevent dead zones, and build consistent scoring opportunities.",
+    "seoFeatures": [
+      "Strategy-forward puzzle gameplay",
+      "Quick starts with long-term mastery potential",
+      "Replayable sessions that reward planning"
+    ],
+    "faq": [
+      {
+        "question": "What makes Block Forge different from casual puzzle games?",
+        "answer": "Block Forge emphasizes planning and positioning, so smart long-term decisions matter more than random moves."
+      },
+      {
+        "question": "Can I play Block Forge on a phone or tablet?",
+        "answer": "Block Forge is built for modern browsers and is accessible across common device types."
+      }
+    ],
     "fullScreenUrl": "https://terapixelgames.github.io/block_forge/",
     "embedUrl": "https://terapixelgames.github.io/block_forge/"
   },
@@ -39,6 +129,24 @@
     "title": "SumSlide",
     "slug": "sumslide",
     "image": "/images/games/sumslide.jpg",
+    "seoIntro": "SumSlide is a number puzzle game focused on clean logic, accurate moves, and efficient problem solving.",
+    "seoDetails": "Players who enjoy math-flavored challenges can use each round to sharpen recognition speed and improve solution quality. It is built for smooth browser play and repeat sessions.",
+    "seoHowToPlay": "Analyze each board state, make deliberate moves, and optimize your path to complete goals in fewer steps.",
+    "seoFeatures": [
+      "Number-based puzzle design for logical thinkers",
+      "Low-friction gameplay that works well in-browser",
+      "Strong replayability through optimization"
+    ],
+    "faq": [
+      {
+        "question": "Is SumSlide available now?",
+        "answer": "SumSlide is listed on Terapixel Games and may be marked coming soon depending on release status."
+      },
+      {
+        "question": "What skills does SumSlide focus on?",
+        "answer": "SumSlide focuses on logical sequencing, number awareness, and efficient move planning."
+      }
+    ],
     "fullScreenUrl": null,
     "embedUrl": null
   },
@@ -46,6 +154,24 @@
     "title": "Worm Breaker",
     "slug": "worm-breaker",
     "image": "/images/games/worm-breaker.jpg",
+    "seoIntro": "Worm Breaker is an action browser game centered on timing, positioning, and staying one step ahead.",
+    "seoDetails": "Its core loop is easy to jump into while still demanding control and consistency at higher intensity. Each attempt is a chance to improve precision and decision speed.",
+    "seoHowToPlay": "Track movement patterns, react quickly, and prioritize safe positioning to extend each run.",
+    "seoFeatures": [
+      "Action gameplay with immediate input response",
+      "Short sessions with high replay potential",
+      "Designed for players who like reflex challenges"
+    ],
+    "faq": [
+      {
+        "question": "What is the goal in Worm Breaker?",
+        "answer": "The goal is to survive longer by managing timing and movement under increasing pressure."
+      },
+      {
+        "question": "Is Worm Breaker free on Terapixel Games?",
+        "answer": "Yes. Worm Breaker is intended to be accessible as a free browser game."
+      }
+    ],
     "fullScreenUrl": null,
     "embedUrl": null
   },
@@ -53,6 +179,24 @@
     "title": "GloBlocks",
     "slug": "globlocks",
     "image": "/images/games/globlocks.jpg",
+    "seoIntro": "GloBlocks is a browser puzzle game built around block logic, clean arrangement, and tactical sequencing.",
+    "seoDetails": "The game is ideal for players who want a thoughtful challenge that still fits into short play sessions. Success comes from balancing immediate gains with long-term board control.",
+    "seoHowToPlay": "Evaluate incoming shapes, set up combinations, and preserve board space for future moves.",
+    "seoFeatures": [
+      "Block puzzle mechanics with strategic depth",
+      "Accessible sessions for casual and competitive play",
+      "Great replay loop for refining puzzle efficiency"
+    ],
+    "faq": [
+      {
+        "question": "What kind of game is GloBlocks?",
+        "answer": "GloBlocks is a strategy-oriented block puzzle game for browser play."
+      },
+      {
+        "question": "Is GloBlocks better for short or long sessions?",
+        "answer": "It supports both, with quick rounds and a replay loop that rewards longer practice."
+      }
+    ],
     "fullScreenUrl": null,
     "embedUrl": null
   },
@@ -60,6 +204,24 @@
     "title": "SpeedSolitaire",
     "slug": "speedsolitaire",
     "image": "/images/games/speedsolitaire.jpg",
+    "seoIntro": "SpeedSolitaire is a fast browser card game that blends classic solitaire logic with time-focused play.",
+    "seoDetails": "It rewards quick pattern recognition and low-latency decision making, making it a strong option for players who enjoy traditional card structure with a modern pace.",
+    "seoHowToPlay": "Build stacks efficiently, reduce hesitation, and keep card flow moving to finish rounds faster.",
+    "seoFeatures": [
+      "Classic solitaire principles with speed emphasis",
+      "Simple controls and immediate browser access",
+      "Excellent for daily practice and time attacks"
+    ],
+    "faq": [
+      {
+        "question": "How is SpeedSolitaire different from regular solitaire?",
+        "answer": "SpeedSolitaire keeps classic solitaire foundations but emphasizes faster decisions and shorter completion times."
+      },
+      {
+        "question": "Can I use SpeedSolitaire for daily practice?",
+        "answer": "Yes. Short rounds make it useful for regular score and time improvement sessions."
+      }
+    ],
     "fullScreenUrl": null,
     "embedUrl": null
   }

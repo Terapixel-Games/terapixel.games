@@ -7,16 +7,70 @@ export function getStaticPaths() {
   const gameList = games as Game[];
   return gameList.map((game) => ({
     params: { slug: game.slug },
-    props: { game }
+    props: { game, allGames: gameList }
   }));
 }
 
-const { game } = Astro.props as { game: Game };
+const { game, allGames } = Astro.props as { game: Game; allGames: Game[] };
 const showEmbed = Boolean(game.embedUrl);
 const showFullScreen = Boolean(game.fullScreenUrl);
+
+const fallbackIntro = `${game.title} is a browser game from Terapixel Games with quick sessions and accessible gameplay.`;
+const fallbackDetails =
+  'This page includes direct play access, fullscreen support when available, and a focused game hub for players returning to improve their results.';
+const fallbackHowToPlay = `Launch ${game.title}, learn the core loop, and improve performance over repeated sessions.`;
+const fallbackFeatures = ['Instant browser play', 'Short sessions with replay value', 'Works well on modern desktop and mobile browsers'];
+
+const seoIntro = game.seoIntro ?? fallbackIntro;
+const seoDetails = game.seoDetails ?? fallbackDetails;
+const seoHowToPlay = game.seoHowToPlay ?? fallbackHowToPlay;
+const seoFeatures = game.seoFeatures ?? fallbackFeatures;
+const faq = game.faq ?? [];
+
+const metaDescription = `${seoIntro} ${seoDetails}`.slice(0, 158);
+const siteBase = Astro.site ?? Astro.url;
+const canonicalUrl = new URL(`/${game.slug}`, siteBase).toString();
+const imageUrl = new URL(game.image, siteBase).toString();
+const relatedGames = allGames.filter((candidate) => candidate.slug !== game.slug).slice(0, 3);
+
+const videoGameJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoGame',
+  name: game.title,
+  url: canonicalUrl,
+  image: imageUrl,
+  description: metaDescription,
+  gamePlatform: 'Web Browser',
+  applicationCategory: 'Game',
+  operatingSystem: 'Any',
+  publisher: {
+    '@type': 'Organization',
+    name: 'Terapixel Games'
+  },
+  isAccessibleForFree: true
+};
+
+const faqJsonLd =
+  faq.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faq.map((entry) => ({
+          '@type': 'Question',
+          name: entry.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: entry.answer
+          }
+        }))
+      }
+    : null;
 ---
 
-<BaseLayout title={game.title} description={`Play ${game.title} on Terapixel Games.`}>
+<BaseLayout title={game.title} description={metaDescription} image={game.image}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(videoGameJsonLd)} />
+  {faqJsonLd && <script slot="head" type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />}
+
   <section class="space-y-7">
     <h1 class="text-center text-4xl font-normal">{game.title}</h1>
 
@@ -51,5 +105,59 @@ const showFullScreen = Boolean(game.fullScreenUrl);
       }
       <a href="/games" class="underline underline-offset-4 text-zinc-300 hover:text-white">Back to Games</a>
     </div>
+
+    <section class="mx-auto max-w-4xl space-y-4 text-zinc-700" aria-labelledby="about-this-game">
+      <h2 id="about-this-game" class="text-2xl text-zinc-900">
+        About {game.title}
+      </h2>
+      <p>{seoIntro}</p>
+      <p>{seoDetails}</p>
+    </section>
+
+    <section class="mx-auto max-w-4xl space-y-3 text-zinc-700" aria-labelledby="how-to-play-game">
+      <h2 id="how-to-play-game" class="text-2xl text-zinc-900">
+        How To Play {game.title}
+      </h2>
+      <p>{seoHowToPlay}</p>
+      <ul class="list-disc space-y-1 pl-6">
+        {seoFeatures.map((feature) => <li>{feature}</li>)}
+      </ul>
+    </section>
+
+    {
+      faq.length > 0 && (
+        <section class="mx-auto max-w-4xl space-y-4 text-zinc-700" aria-labelledby="faq-heading">
+          <h2 id="faq-heading" class="text-2xl text-zinc-900">
+            {game.title} FAQ
+          </h2>
+          <div class="space-y-3">
+            {faq.map((entry) => (
+              <article class="rounded-md border border-zinc-200 p-4">
+                <h3 class="text-lg text-zinc-900">{entry.question}</h3>
+                <p class="mt-2 text-zinc-700">{entry.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      relatedGames.length > 0 && (
+        <section class="mx-auto max-w-4xl space-y-4" aria-labelledby="related-games-heading">
+          <h2 id="related-games-heading" class="text-2xl text-zinc-900">
+            Related Games
+          </h2>
+          <div class="grid gap-4 sm:grid-cols-3">
+            {relatedGames.map((relatedGame) => (
+              <a href={`/${relatedGame.slug}`} class="rounded-md border border-zinc-200 p-4 transition hover:border-zinc-400">
+                <p class="text-zinc-900">{relatedGame.title}</p>
+                <p class="mt-2 text-sm text-zinc-600">Play this game</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
   </section>
 </BaseLayout>
