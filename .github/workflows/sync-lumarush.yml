@@ -75,38 +75,19 @@ jobs:
           sudo apt-get install -y unzip rsync
 
           API_URL="https://api.github.com/repos/${{ steps.vars.outputs.source_repo }}/releases/tags/${{ steps.vars.outputs.release_tag }}"
-          BROWSER_URL=$(python - "$API_URL" "${{ steps.vars.outputs.release_asset }}" "$READ_TOKEN" <<'PY'
-import json
-import sys
-import urllib.request
+          AUTH_HEADER=()
+          if [ -n "${READ_TOKEN:-}" ]; then
+            AUTH_HEADER=(-H "Authorization: Bearer ${READ_TOKEN}")
+          fi
 
-api_url = sys.argv[1]
-asset_name = sys.argv[2]
-token = sys.argv[3] if len(sys.argv) > 3 else ""
-
-headers = {"Accept": "application/vnd.github+json"}
-if token:
-    headers["Authorization"] = f"Bearer {token}"
-
-req = urllib.request.Request(api_url, headers=headers)
-with urllib.request.urlopen(req) as resp:
-    data = json.loads(resp.read().decode("utf-8"))
-
-for asset in data.get("assets", []):
-    if asset.get("name") == asset_name:
-        print(asset.get("browser_download_url", ""))
-        break
-PY
-          )
+          RELEASE_JSON=$(curl -fsSL "${AUTH_HEADER[@]}" \
+            -H "Accept: application/vnd.github+json" \
+            "$API_URL")
+          BROWSER_URL=$(RELEASE_JSON="$RELEASE_JSON" ASSET_NAME="${{ steps.vars.outputs.release_asset }}" python3 -c "import json, os; data = json.loads(os.environ.get('RELEASE_JSON', '{}')); asset = os.environ.get('ASSET_NAME', ''); print(next((a.get('browser_download_url', '') for a in data.get('assets', []) if a.get('name') == asset), ''))")
 
           if [ -z "$BROWSER_URL" ]; then
             echo "Release asset not found: ${{ steps.vars.outputs.release_asset }}"
             exit 1
-          fi
-
-          AUTH_HEADER=()
-          if [ -n "${READ_TOKEN:-}" ]; then
-            AUTH_HEADER=(-H "Authorization: Bearer ${READ_TOKEN}")
           fi
 
           curl -sS -L "${AUTH_HEADER[@]}" \
