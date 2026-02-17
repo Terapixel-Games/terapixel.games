@@ -5,7 +5,7 @@ on:
     branches: ["main"]
   workflow_dispatch:
   workflow_run:
-    workflows: ["Sync LumaRush Build"]
+    workflows: ["Sync LumaRush Build", "Sync Color Crunch Build"]
     types: [completed]
 
 permissions:
