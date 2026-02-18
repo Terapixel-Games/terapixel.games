@@ -16,10 +16,14 @@ const canonicalHref = Astro.site
   : Astro.url.toString();
 const imageHref = Astro.site ? new URL(image, Astro.site).toString() : new URL(image, Astro.url).toString();
 const socialTitle = `${title} | Terapixel Games`;
-const authNakamaBaseUrl =
-  import.meta.env.PUBLIC_TPX_AUTH_NAKAMA_BASE_URL || 'https://lumarush-nakama.onrender.com';
-const authNakamaServerKey =
-  import.meta.env.PUBLIC_TPX_AUTH_NAKAMA_SERVER_KEY || '';
+const identityLoginUrl = import.meta.env.PUBLIC_TPX_IDENTITY_LOGIN_URL || '';
+const identityLogoutUrl = import.meta.env.PUBLIC_TPX_IDENTITY_LOGOUT_URL || '';
+const identitySessionUrl = import.meta.env.PUBLIC_TPX_IDENTITY_SESSION_URL || '';
+const identityReturnParam = import.meta.env.PUBLIC_TPX_IDENTITY_RETURN_PARAM || 'return_to';
+const identityEmailParam = import.meta.env.PUBLIC_TPX_IDENTITY_EMAIL_PARAM || 'email';
+const identityLogoutMethod = import.meta.env.PUBLIC_TPX_IDENTITY_LOGOUT_METHOD || 'POST';
+const identityHydrateSessionOnLoad =
+  import.meta.env.PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD || 'true';
 ---
 
 <!doctype html>
@@ -51,10 +55,13 @@ const authNakamaServerKey =
     ></script>
     <script is:inline>
       window.__TPX_AUTH_CONFIG = {
-        nakamaBaseUrl: {JSON.stringify(authNakamaBaseUrl)},
-        nakamaServerKey: {JSON.stringify(authNakamaServerKey)},
-        authGameId: 'lumarush',
-        authPlatform: 'terapixel'
+        loginUrl: {JSON.stringify(identityLoginUrl)},
+        logoutUrl: {JSON.stringify(identityLogoutUrl)},
+        sessionUrl: {JSON.stringify(identitySessionUrl)},
+        returnParam: {JSON.stringify(identityReturnParam)},
+        emailParam: {JSON.stringify(identityEmailParam)},
+        logoutMethod: {JSON.stringify(identityLogoutMethod)},
+        hydrateFromSessionOnLoad: {JSON.stringify(identityHydrateSessionOnLoad)}
       };
     </script>
     <script src="/scripts/terapixel-identity.js" defer></script>

@@ -4,37 +4,50 @@
   }
 
   var GLOBAL_IDENTITY_KEY = "terapixel_identity_v1";
-  var SITE_DEVICE_KEY = "terapixel_site_device_id_v1";
-  var SITE_USERNAME_KEY = "terapixel_site_username_v1";
   var KNOWN_SAVE_KEYS = ["lumarush_save_v1", "color_crunch_save_v1"];
+  var AUTH_MARKER_KEY = "tpx_auth";
+  var URL_USER_ID_KEYS = [
+    "terapixel_user_id",
+    "tpx_user_id",
+    "profile_id",
+    "player_id",
+    "playerId",
+    "user_id",
+  ];
+  var URL_EMAIL_KEYS = ["terapixel_email", "email"];
+  var URL_DISPLAY_KEYS = [
+    "terapixel_display_name",
+    "display_name",
+    "displayName",
+    "name",
+  ];
+  var URL_LOGOUT_KEYS = ["logout", "logged_out", "tpx_logout"];
 
   var configFromWindow = window.__TPX_AUTH_CONFIG || {};
   var AUTH_CONFIG = {
-    nakamaBaseUrl:
-      String(configFromWindow.nakamaBaseUrl || "").trim() ||
-      "https://lumarush-nakama.onrender.com",
-    nakamaServerKey: String(configFromWindow.nakamaServerKey || "").trim(),
-    authGameId: String(configFromWindow.authGameId || "").trim() || "lumarush",
-    authPlatform: String(configFromWindow.authPlatform || "").trim() || "terapixel",
+    loginUrl: String(configFromWindow.loginUrl || "").trim(),
+    logoutUrl: String(configFromWindow.logoutUrl || "").trim(),
+    sessionUrl: String(configFromWindow.sessionUrl || "").trim(),
+    returnParam: String(configFromWindow.returnParam || "").trim() || "return_to",
+    emailParam: String(configFromWindow.emailParam || "").trim() || "email",
+    logoutMethod: String(configFromWindow.logoutMethod || "").trim().toUpperCase() || "POST",
+    hydrateFromSessionOnLoad:
+      String(configFromWindow.hydrateFromSessionOnLoad || "true").toLowerCase() !== "false",
   };
 
   var listeners = new Set();
   var observedSaveKeys = new Set(KNOWN_SAVE_KEYS);
   var saveSnapshots = new Map();
   var state = readGlobalIdentity();
-  var siteSession = null;
 
-  function nowMs() {
-    return Date.now();
+  function nowSeconds() {
+    return Math.floor(Date.now() / 1000);
   }
 
-  function shallowEqualIdentity(a, b) {
-    return (
-      String(a.terapixel_user_id || "") === String(b.terapixel_user_id || "") &&
-      String(a.terapixel_display_name || "") === String(b.terapixel_display_name || "") &&
-      String(a.terapixel_email || "") === String(b.terapixel_email || "") &&
-      Boolean(a.authenticated) === Boolean(b.authenticated)
-    );
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, ms);
+    });
   }
 
   function safeParseJson(raw) {
@@ -51,19 +64,14 @@
   function normalizeIdentity(value) {
     var row = value && typeof value === "object" ? value : {};
     var userId = String(
-      row.terapixel_user_id || row.user_id || row.userId || ""
+      row.terapixel_user_id || row.user_id || row.userId || row.profile_id || row.player_id || ""
     ).trim();
     var displayName = String(
-      row.terapixel_display_name || row.display_name || row.displayName || ""
+      row.terapixel_display_name || row.display_name || row.displayName || row.name || ""
     ).trim();
-    var email = String(
-      row.terapixel_email || row.email || row.linked_email || ""
-    )
-      .trim()
-      .toLowerCase();
-    var authenticated = !!userId;
+    var email = String(row.terapixel_email || row.email || "").trim().toLowerCase();
     return {
-      authenticated: authenticated,
+      authenticated: !!userId,
       terapixel_user_id: userId,
       terapixel_display_name: displayName,
       terapixel_email: email,
@@ -78,27 +86,35 @@
     return !!(value && String(value.terapixel_user_id || "").trim());
   }
 
+  function sameIdentity(a, b) {
+    return (
+      String(a.terapixel_user_id || "") === String(b.terapixel_user_id || "") &&
+      String(a.terapixel_display_name || "") === String(b.terapixel_display_name || "") &&
+      String(a.terapixel_email || "") === String(b.terapixel_email || "") &&
+      Boolean(a.authenticated) === Boolean(b.authenticated)
+    );
+  }
+
   function readGlobalIdentity() {
     var parsed = safeParseJson(window.localStorage.getItem(GLOBAL_IDENTITY_KEY));
     return normalizeIdentity(parsed || {});
   }
 
-  function writeGlobalIdentity(nextIdentity, source) {
-    var identity = normalizeIdentity(nextIdentity);
+  function writeGlobalIdentity(identity, source) {
+    var normalized = normalizeIdentity(identity);
     var payload = {
-      authenticated: identity.authenticated,
-      terapixel_user_id: identity.terapixel_user_id,
-      terapixel_display_name: identity.terapixel_display_name,
-      terapixel_email: identity.terapixel_email,
-      updated_at: Math.floor(nowMs() / 1000),
-      source: String(source || "").trim() || "unknown",
+      authenticated: normalized.authenticated,
+      terapixel_user_id: normalized.terapixel_user_id,
+      terapixel_display_name: normalized.terapixel_display_name,
+      terapixel_email: normalized.terapixel_email,
+      updated_at: nowSeconds(),
+      source: String(source || "unknown"),
     };
     window.localStorage.setItem(GLOBAL_IDENTITY_KEY, JSON.stringify(payload));
   }
 
   function readSavePayload(saveKey) {
-    var raw = window.localStorage.getItem(saveKey);
-    var parsed = safeParseJson(raw);
+    var parsed = safeParseJson(window.localStorage.getItem(saveKey));
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return null;
     }
@@ -118,20 +134,13 @@
   }
 
   function writeIdentityIntoSave(saveKey, identity) {
-    var save = readSavePayload(saveKey);
-    if (!save) {
-      save = {};
-    }
+    var save = readSavePayload(saveKey) || {};
     var normalized = normalizeIdentity(identity);
     save.terapixel_user_id = normalized.terapixel_user_id;
     save.terapixel_display_name = normalized.terapixel_display_name;
     save.terapixel_email = normalized.terapixel_email;
     window.localStorage.setItem(saveKey, JSON.stringify(save));
     saveSnapshots.set(saveKey, window.localStorage.getItem(saveKey) || "");
-  }
-
-  function clearIdentityInSave(saveKey) {
-    writeIdentityIntoSave(saveKey, emptyIdentity());
   }
 
   function trackSaveKey(saveKey) {
@@ -147,24 +156,24 @@
       try {
         listener(getState(), { reason: reason || "unknown" });
       } catch (_err) {
-        // Keep listener fanout isolated.
+        // Keep listeners isolated.
       }
     });
   }
 
   function setState(nextIdentity, reason) {
     var normalized = normalizeIdentity(nextIdentity);
-    if (shallowEqualIdentity(state, normalized)) {
+    if (sameIdentity(state, normalized)) {
       return;
     }
     state = normalized;
     emit(reason || "state-changed");
   }
 
-  function syncAllKnownSavesFromIdentity(identity) {
+  function syncSavesFromIdentity(identity) {
     observedSaveKeys.forEach(function (saveKey) {
       var current = readIdentityFromSave(saveKey);
-      if (shallowEqualIdentity(current, identity)) {
+      if (sameIdentity(current, identity)) {
         return;
       }
       writeIdentityIntoSave(saveKey, identity);
@@ -174,46 +183,44 @@
   function setAuthenticatedIdentity(nextIdentity, reason) {
     var normalized = normalizeIdentity(nextIdentity);
     if (!hasIdentity(normalized)) {
-      clearIdentity(reason);
+      clearIdentity(reason || "clear");
       return;
     }
-    writeGlobalIdentity(normalized, reason || "identity-set");
-    syncAllKnownSavesFromIdentity(normalized);
-    setState(normalized, reason || "identity-set");
+    writeGlobalIdentity(normalized, reason || "set-authenticated");
+    syncSavesFromIdentity(normalized);
+    setState(normalized, reason || "set-authenticated");
   }
 
   function clearIdentity(reason) {
-    var empty = emptyIdentity();
-    writeGlobalIdentity(empty, reason || "logout");
-    observedSaveKeys.forEach(function (saveKey) {
-      clearIdentityInSave(saveKey);
-    });
-    setState(empty, reason || "logout");
+    var cleared = emptyIdentity();
+    writeGlobalIdentity(cleared, reason || "logout");
+    syncSavesFromIdentity(cleared);
+    setState(cleared, reason || "logout");
   }
 
   function reconcileIdentity(reason) {
-    var fromGlobal = readGlobalIdentity();
-    if (hasIdentity(fromGlobal)) {
-      syncAllKnownSavesFromIdentity(fromGlobal);
-      setState(fromGlobal, reason || "reconcile:global");
+    var globalIdentity = readGlobalIdentity();
+    if (hasIdentity(globalIdentity)) {
+      syncSavesFromIdentity(globalIdentity);
+      setState(globalIdentity, reason || "reconcile:global");
       return;
     }
 
-    var fromSaves = null;
+    var saveIdentity = null;
     observedSaveKeys.forEach(function (saveKey) {
-      if (fromSaves) {
+      if (saveIdentity) {
         return;
       }
-      var fromSave = readIdentityFromSave(saveKey);
-      if (hasIdentity(fromSave)) {
-        fromSaves = fromSave;
+      var candidate = readIdentityFromSave(saveKey);
+      if (hasIdentity(candidate)) {
+        saveIdentity = candidate;
       }
     });
 
-    if (fromSaves) {
-      writeGlobalIdentity(fromSaves, "reconcile:save");
-      syncAllKnownSavesFromIdentity(fromSaves);
-      setState(fromSaves, reason || "reconcile:save");
+    if (saveIdentity) {
+      writeGlobalIdentity(saveIdentity, "reconcile:save");
+      syncSavesFromIdentity(saveIdentity);
+      setState(saveIdentity, reason || "reconcile:save");
       return;
     }
 
@@ -236,8 +243,8 @@
   function pollKnownSaves() {
     observedSaveKeys.forEach(function (saveKey) {
       var raw = window.localStorage.getItem(saveKey) || "";
-      var previous = saveSnapshots.get(saveKey);
-      if (previous === raw) {
+      var prev = saveSnapshots.get(saveKey);
+      if (raw === prev) {
         return;
       }
       saveSnapshots.set(saveKey, raw);
@@ -245,214 +252,200 @@
     });
   }
 
-  function decodeJwtExp(token) {
-    try {
-      var parts = String(token || "").split(".");
-      if (parts.length < 2) {
-        return 0;
+  function parseBooleanLike(value) {
+    var normalized = String(value || "").trim().toLowerCase();
+    return normalized === "1" || normalized === "true" || normalized === "yes";
+  }
+
+  function extractIdentityFromObject(row) {
+    if (!row || typeof row !== "object") {
+      return emptyIdentity();
+    }
+    var direct = normalizeIdentity(row);
+    if (hasIdentity(direct)) {
+      return direct;
+    }
+    var candidates = [
+      row.user,
+      row.profile,
+      row.identity,
+      row.session,
+      row.data,
+      row.result,
+      row.payload,
+    ];
+    for (var i = 0; i < candidates.length; i += 1) {
+      var nested = normalizeIdentity(candidates[i] || {});
+      if (hasIdentity(nested)) {
+        return nested;
       }
-      var payloadB64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      var json = atob(payloadB64);
-      var payload = JSON.parse(json);
-      return Number(payload.exp || 0) * 1000;
-    } catch (_err) {
-      return 0;
     }
+    return emptyIdentity();
   }
 
-  function randomId() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-      return window.crypto.randomUUID();
-    }
-    return String(Math.floor(Math.random() * 1e12));
+  function buildUrlWithParams(baseUrl, params) {
+    var url = new URL(baseUrl, window.location.origin);
+    Object.keys(params || {}).forEach(function (key) {
+      var value = params[key];
+      if (value === undefined || value === null || value === "") {
+        return;
+      }
+      url.searchParams.set(key, String(value));
+    });
+    return url.toString();
   }
 
-  function getOrCreateSiteDeviceId() {
-    var current = String(window.localStorage.getItem(SITE_DEVICE_KEY) || "").trim();
-    if (current) {
-      return current;
-    }
-    current = "site-" + randomId();
-    window.localStorage.setItem(SITE_DEVICE_KEY, current);
-    return current;
+  function makeAuthReturnUrl() {
+    var returnUrl = new URL(window.location.href);
+    returnUrl.searchParams.set(AUTH_MARKER_KEY, "1");
+    return returnUrl.toString();
   }
 
-  function getOrCreateSiteUsername() {
-    var current = String(window.localStorage.getItem(SITE_USERNAME_KEY) || "").trim();
-    if (current) {
-      return current;
-    }
-    current = "site" + randomId().replace(/[^a-zA-Z0-9]/g, "").slice(0, 10);
-    window.localStorage.setItem(SITE_USERNAME_KEY, current);
-    return current;
-  }
+  function tryConsumeIdentityFromUrl() {
+    var url = new URL(window.location.href);
+    var changed = false;
+    var sawAuthMarker = parseBooleanLike(url.searchParams.get(AUTH_MARKER_KEY));
 
-  function basicAuthValue(serverKey) {
-    return "Basic " + btoa(String(serverKey || "").trim() + ":");
-  }
+    var logoutRequested = URL_LOGOUT_KEYS.some(function (key) {
+      var value = url.searchParams.get(key);
+      return parseBooleanLike(value);
+    });
 
-  async function authenticateSiteDevice(forceRefresh) {
-    if (!AUTH_CONFIG.nakamaServerKey) {
-      throw new Error("Site login is not configured.");
+    var userId = "";
+    for (var i = 0; i < URL_USER_ID_KEYS.length; i += 1) {
+      userId = String(url.searchParams.get(URL_USER_ID_KEYS[i]) || "").trim();
+      if (userId) {
+        break;
+      }
     }
-    if (!forceRefresh && siteSession && siteSession.token && siteSession.expiresAtMs > nowMs() + 30 * 1000) {
-      return siteSession;
+
+    var email = "";
+    for (var j = 0; j < URL_EMAIL_KEYS.length; j += 1) {
+      email = String(url.searchParams.get(URL_EMAIL_KEYS[j]) || "").trim().toLowerCase();
+      if (email) {
+        break;
+      }
     }
-    var deviceId = getOrCreateSiteDeviceId();
-    var username = getOrCreateSiteUsername();
-    var baseUrl = AUTH_CONFIG.nakamaBaseUrl.replace(/\/+$/, "");
-    var url =
-      baseUrl +
-      "/v2/account/authenticate/device?create=true&username=" +
-      encodeURIComponent(username);
-    var body = {
-      id: deviceId,
-      vars: {
-        platform: AUTH_CONFIG.authPlatform,
-        game: AUTH_CONFIG.authGameId,
-        terapixel_user_id: "",
-      },
+
+    var displayName = "";
+    for (var k = 0; k < URL_DISPLAY_KEYS.length; k += 1) {
+      displayName = String(url.searchParams.get(URL_DISPLAY_KEYS[k]) || "").trim();
+      if (displayName) {
+        break;
+      }
+    }
+
+    if (logoutRequested) {
+      clearIdentity("url:logout");
+      changed = true;
+    } else if (userId) {
+      setAuthenticatedIdentity(
+        {
+          terapixel_user_id: userId,
+          terapixel_display_name: displayName,
+          terapixel_email: email,
+        },
+        "url:identity"
+      );
+      changed = true;
+    }
+
+    var keysToRemove = [AUTH_MARKER_KEY]
+      .concat(URL_LOGOUT_KEYS)
+      .concat(URL_USER_ID_KEYS)
+      .concat(URL_EMAIL_KEYS)
+      .concat(URL_DISPLAY_KEYS);
+    keysToRemove.forEach(function (key) {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      var cleaned = url.pathname + (url.search ? url.search : "") + url.hash;
+      window.history.replaceState({}, "", cleaned);
+    }
+
+    return {
+      sawAuthMarker: sawAuthMarker,
+      hadUrlIdentity: !!userId || logoutRequested,
     };
-    var response = await fetch(url, {
-      method: "POST",
+  }
+
+  async function checkSession() {
+    if (!AUTH_CONFIG.sessionUrl) {
+      return { ok: false, error: "session endpoint not configured" };
+    }
+    var response = await fetch(AUTH_CONFIG.sessionUrl, {
+      method: "GET",
+      credentials: "include",
       headers: {
-        Authorization: basicAuthValue(AUTH_CONFIG.nakamaServerKey),
-        "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify(body),
     });
     var payload = await response.json().catch(function () {
       return {};
     });
-    if (!response.ok || !payload.token) {
-      throw new Error("Failed to initialize site auth session.");
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error:
+          String(
+            (payload && payload.error && payload.error.message) ||
+              payload.message ||
+              "session check failed"
+          ) || "session check failed",
+      };
     }
-    var expiresAtMs = decodeJwtExp(payload.token);
-    if (!expiresAtMs || !isFinite(expiresAtMs)) {
-      expiresAtMs = nowMs() + 5 * 60 * 1000;
+
+    if (payload && payload.authenticated === false) {
+      return { ok: true, authenticated: false, identity: emptyIdentity() };
     }
-    siteSession = {
-      token: String(payload.token),
-      expiresAtMs: expiresAtMs,
-    };
-    return siteSession;
+
+    var identity = extractIdentityFromObject(payload);
+    return { ok: true, authenticated: hasIdentity(identity), identity: identity };
   }
 
-  function parseRpcPayload(payload) {
-    if (!payload || typeof payload !== "object") {
-      return {};
+  async function hydrateFromSession(reason) {
+    var session = await checkSession();
+    if (!session.ok) {
+      return session;
     }
-    if (payload.payload && typeof payload.payload === "string") {
-      return safeParseJson(payload.payload) || {};
+    if (session.authenticated && hasIdentity(session.identity)) {
+      setAuthenticatedIdentity(session.identity, reason || "session:authenticated");
+    } else {
+      clearIdentity(reason || "session:anonymous");
     }
-    if (payload.payload && typeof payload.payload === "object") {
-      return payload.payload;
-    }
-    return payload;
+    return session;
   }
 
-  async function callRpc(rpcId, data) {
-    var baseUrl = AUTH_CONFIG.nakamaBaseUrl.replace(/\/+$/, "");
-    var payloadBody = JSON.stringify(JSON.stringify(data || {}));
-    for (var attempt = 0; attempt < 2; attempt += 1) {
-      var session = await authenticateSiteDevice(attempt > 0);
-      var response = await fetch(baseUrl + "/v2/rpc/" + encodeURIComponent(rpcId), {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + session.token,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: payloadBody,
+  async function logoutViaPlatform() {
+    if (!AUTH_CONFIG.logoutUrl) {
+      clearIdentity("site-logout");
+      return { ok: true, mode: "local" };
+    }
+
+    if (AUTH_CONFIG.logoutMethod === "REDIRECT") {
+      var redirectUrl = buildUrlWithParams(AUTH_CONFIG.logoutUrl, {
+        return_to: makeAuthReturnUrl(),
       });
-      var payload = await response.json().catch(function () {
-        return {};
+      clearIdentity("site-logout");
+      window.location.assign(redirectUrl);
+      return { ok: true, mode: "redirect" };
+    }
+
+    try {
+      await fetch(AUTH_CONFIG.logoutUrl, {
+        method: AUTH_CONFIG.logoutMethod || "POST",
+        credentials: "include",
       });
-      if (response.status === 401) {
-        siteSession = null;
-        continue;
-      }
-      if (!response.ok) {
-        var message =
-          (payload &&
-            payload.message) ||
-          (payload &&
-            payload.error &&
-            payload.error.message) ||
-          "RPC request failed.";
-        throw new Error(String(message));
-      }
-      return parseRpcPayload(payload);
+    } catch (_err) {
+      // Local logout still proceeds.
     }
-    throw new Error("Unable to authenticate session for RPC request.");
-  }
-
-  function getProfileIdFromStatus(status) {
-    return String(
-      status.primaryProfileId ||
-        status.primary_profile_id ||
-        status.secondaryProfileId ||
-        status.secondary_profile_id ||
-        status.profile_id ||
-        status.profileId ||
-        ""
-    ).trim();
-  }
-
-  async function startSiteLogin(email) {
-    var normalizedEmail = String(email || "").trim().toLowerCase();
-    if (!normalizedEmail || normalizedEmail.indexOf("@") <= 0) {
-      throw new Error("Enter a valid email address.");
-    }
-    var start = await callRpc("tpx_account_magic_link_start", {
-      email: normalizedEmail,
-    });
-    return {
-      email: normalizedEmail,
-      start: start,
-    };
-  }
-
-  async function checkSiteLoginStatus() {
-    return callRpc("tpx_account_magic_link_status", {
-      clear_after_read: false,
-    });
-  }
-
-  async function waitForSiteLoginCompletion(email, options) {
-    var normalizedEmail = String(email || "").trim().toLowerCase();
-    var timeoutMs = Number((options && options.timeoutMs) || 5 * 60 * 1000);
-    var intervalMs = Number((options && options.intervalMs) || 3000);
-    var onProgress =
-      options && typeof options.onProgress === "function" ? options.onProgress : null;
-    var startedAt = nowMs();
-
-    while (nowMs() - startedAt <= timeoutMs) {
-      var status = await checkSiteLoginStatus();
-      if (status && status.completed) {
-        var profileId = getProfileIdFromStatus(status);
-        if (!profileId) {
-          throw new Error("Login completed but profile id was missing.");
-        }
-        setAuthenticatedIdentity(
-          {
-            terapixel_user_id: profileId,
-            terapixel_display_name: "",
-            terapixel_email: String(status.email || normalizedEmail || "").trim().toLowerCase(),
-          },
-          "site-login"
-        );
-        return status;
-      }
-      if (onProgress) {
-        onProgress(status || {});
-      }
-      await new Promise(function (resolve) {
-        window.setTimeout(resolve, intervalMs);
-      });
-    }
-    throw new Error("Timed out waiting for email link completion.");
+    clearIdentity("site-logout");
+    return { ok: true, mode: "request" };
   }
 
   function getState() {
@@ -487,9 +480,21 @@
         previous = current;
       });
     }
-    return {
-      saveKey: saveKey,
-    };
+    return { saveKey: saveKey };
+  }
+
+  function startLogin(emailHint) {
+    if (!AUTH_CONFIG.loginUrl) {
+      throw new Error("Site login is not configured.");
+    }
+    var params = {};
+    params[AUTH_CONFIG.returnParam] = makeAuthReturnUrl();
+    var normalizedEmail = String(emailHint || "").trim().toLowerCase();
+    if (normalizedEmail) {
+      params[AUTH_CONFIG.emailParam] = normalizedEmail;
+    }
+    var targetUrl = buildUrlWithParams(AUTH_CONFIG.loginUrl, params);
+    window.location.assign(targetUrl);
   }
 
   function handleStorageEvent(event) {
@@ -509,23 +514,37 @@
 
   window.addEventListener("storage", handleStorageEvent);
   observedSaveKeys.forEach(trackSaveKey);
+
+  var urlState = tryConsumeIdentityFromUrl();
   reconcileIdentity("boot");
+
+  if (
+    AUTH_CONFIG.hydrateFromSessionOnLoad &&
+    AUTH_CONFIG.sessionUrl &&
+    (urlState.sawAuthMarker || !hasIdentity(state))
+  ) {
+    hydrateFromSession("boot:session").catch(function () {
+      // Session hydration is optional.
+    });
+  }
+
   window.setInterval(pollKnownSaves, 1000);
 
   var api = {
+    config: AUTH_CONFIG,
     getState: getState,
     subscribe: subscribe,
     connectGameSave: connectGameSave,
-    startLogin: startSiteLogin,
-    waitForLoginCompletion: waitForSiteLoginCompletion,
-    checkLoginStatus: checkSiteLoginStatus,
-    logout: function () {
-      clearIdentity("site-logout");
-    },
     setIdentity: function (identity) {
       setAuthenticatedIdentity(identity, "site-set-identity");
     },
-    config: AUTH_CONFIG,
+    clearIdentity: function () {
+      clearIdentity("site-clear");
+    },
+    checkSession: checkSession,
+    hydrateFromSession: hydrateFromSession,
+    startLogin: startLogin,
+    logout: logoutViaPlatform,
   };
 
   window.TerapixelIdentity = api;
@@ -544,7 +563,23 @@
       return;
     }
 
-    var pollInFlight = false;
+    var isBusy = false;
+
+    function setBusy(nextBusy) {
+      isBusy = !!nextBusy;
+      if (submitButton) {
+        submitButton.disabled = isBusy;
+      }
+      if (logoutButton) {
+        logoutButton.disabled = isBusy;
+      }
+      if (closeButton) {
+        closeButton.disabled = isBusy;
+      }
+      if (emailInput) {
+        emailInput.disabled = isBusy;
+      }
+    }
 
     function formatStateLabel(value) {
       if (!value || !value.authenticated) {
@@ -560,34 +595,20 @@
       return id ? "Profile " + id.slice(0, 8) : "Logged In";
     }
 
-    function setBusy(isBusy) {
-      if (submitButton) {
-        submitButton.disabled = isBusy;
-      }
-      if (logoutButton) {
-        logoutButton.disabled = isBusy;
-      }
-      if (emailInput) {
-        emailInput.disabled = isBusy;
-      }
-      if (closeButton) {
-        closeButton.disabled = isBusy;
-      }
-    }
-
-    function showModal() {
+    function openModal() {
       modal.classList.remove("hidden");
     }
 
-    function hideModal() {
+    function closeModal() {
+      if (isBusy) {
+        return;
+      }
       modal.classList.add("hidden");
-      setBusy(false);
-      pollInFlight = false;
     }
 
-    function render(stateValue) {
-      var authed = !!(stateValue && stateValue.authenticated);
-      labelText.textContent = formatStateLabel(stateValue);
+    function render(currentState) {
+      var authed = !!(currentState && currentState.authenticated);
+      labelText.textContent = formatStateLabel(currentState);
       openButton.textContent = authed ? "Account" : "Login";
       if (submitButton) {
         submitButton.classList.toggle("hidden", authed);
@@ -598,68 +619,68 @@
       if (logoutButton) {
         logoutButton.classList.toggle("hidden", !authed);
       }
-      if (!authed && !pollInFlight) {
-        statusText.textContent = "Enter your email to receive a magic link.";
-      } else if (authed) {
+      if (!authed) {
+        if (!AUTH_CONFIG.loginUrl) {
+          statusText.textContent = "Login is not configured yet.";
+        } else {
+          statusText.textContent = "Enter email and continue to login.";
+        }
+      } else {
         statusText.textContent = "Logged in. Logout here to sign out everywhere.";
       }
     }
 
     openButton.addEventListener("click", function () {
       render(api.getState());
-      showModal();
+      openModal();
       if (emailInput && !api.getState().authenticated) {
         emailInput.focus();
       }
     });
 
-    closeButton.addEventListener("click", hideModal);
+    closeButton.addEventListener("click", closeModal);
     modal.addEventListener("click", function (event) {
-      if (event.target === modal && !pollInFlight) {
-        hideModal();
+      if (event.target === modal) {
+        closeModal();
       }
     });
 
-    if (logoutButton) {
-      logoutButton.addEventListener("click", function () {
-        api.logout();
-        statusText.textContent = "Logged out.";
-        render(api.getState());
+    if (submitButton) {
+      submitButton.addEventListener("click", function () {
+        var email = String((emailInput && emailInput.value) || "").trim().toLowerCase();
+        if (!AUTH_CONFIG.loginUrl) {
+          statusText.textContent = "Login is not configured yet.";
+          return;
+        }
+        setBusy(true);
+        statusText.textContent = "Redirecting to login...";
+        try {
+          api.startLogin(email);
+        } catch (err) {
+          setBusy(false);
+          statusText.textContent = String(
+            (err && err.message) || "Login could not be started."
+          );
+        }
       });
     }
 
-    if (submitButton) {
-      submitButton.addEventListener("click", async function () {
-        if (!emailInput) {
-          return;
-        }
-        var email = String(emailInput.value || "").trim().toLowerCase();
-        if (!email) {
-          statusText.textContent = "Enter a valid email address.";
-          return;
-        }
-        pollInFlight = true;
+    if (logoutButton) {
+      logoutButton.addEventListener("click", async function () {
         setBusy(true);
-        statusText.textContent = "Sending magic link...";
+        statusText.textContent = "Logging out...";
         try {
-          await api.startLogin(email);
-          statusText.textContent = "Email sent. Waiting for link click...";
-          await api.waitForLoginCompletion(email, {
-            timeoutMs: 5 * 60 * 1000,
-            intervalMs: 3000,
-            onProgress: function () {
-              statusText.textContent = "Waiting for link click...";
-            },
-          });
-          statusText.textContent = "Login complete.";
+          await api.logout();
+          statusText.textContent = "Logged out.";
           render(api.getState());
-          window.setTimeout(hideModal, 600);
+          await sleep(400);
+          closeModal();
         } catch (err) {
           statusText.textContent = String(
-            (err && err.message) || "Login failed. Please try again."
+            (err && err.message) || "Logout failed. Please try again."
           );
+        } finally {
           setBusy(false);
-          pollInFlight = false;
         }
       });
     }
