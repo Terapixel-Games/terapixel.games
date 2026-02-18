@@ -16,6 +16,10 @@ const canonicalHref = Astro.site
   : Astro.url.toString();
 const imageHref = Astro.site ? new URL(image, Astro.site).toString() : new URL(image, Astro.url).toString();
 const socialTitle = `${title} | Terapixel Games`;
+const authNakamaBaseUrl =
+  import.meta.env.PUBLIC_TPX_AUTH_NAKAMA_BASE_URL || 'https://lumarush-nakama.onrender.com';
+const authNakamaServerKey =
+  import.meta.env.PUBLIC_TPX_AUTH_NAKAMA_SERVER_KEY || '';
 ---
 
 <!doctype html>
@@ -45,6 +49,15 @@ const socialTitle = `${title} | Terapixel Games`;
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8413230766502262"
       crossorigin="anonymous"
     ></script>
+    <script is:inline>
+      window.__TPX_AUTH_CONFIG = {
+        nakamaBaseUrl: {JSON.stringify(authNakamaBaseUrl)},
+        nakamaServerKey: {JSON.stringify(authNakamaServerKey)},
+        authGameId: 'lumarush',
+        authPlatform: 'terapixel'
+      };
+    </script>
+    <script src="/scripts/terapixel-identity.js" defer></script>
     <slot name="head" />
   </head>
   <body class="min-h-screen bg-white text-zinc-900 antialiased">

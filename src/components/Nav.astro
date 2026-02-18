@@ -44,7 +44,56 @@ const links = [
             );
           })
         }
+        <li class="flex items-center gap-3">
+          <span id="tpx-auth-label" class="hidden text-xs text-zinc-500 sm:inline">Guest</span>
+          <button
+            id="tpx-auth-open"
+            type="button"
+            class="rounded border border-zinc-300 px-3 py-1 text-sm text-zinc-800 hover:border-zinc-400 hover:text-zinc-900"
+          >
+            Login
+          </button>
+        </li>
       </ul>
     </nav>
   </div>
 </header>
+
+<div id="tpx-auth-modal" class="fixed inset-0 z-50 hidden bg-black/45 p-4">
+  <div class="mx-auto mt-24 w-full max-w-md rounded border border-zinc-200 bg-white p-5 shadow-xl">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg text-zinc-900">Terapixel Account</h2>
+      <button
+        id="tpx-auth-close"
+        type="button"
+        class="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:border-zinc-400 hover:text-zinc-900"
+      >
+        Close
+      </button>
+    </div>
+    <p id="tpx-auth-status" class="mb-3 text-sm text-zinc-600">Enter your email to receive a magic link.</p>
+    <input
+      id="tpx-auth-email"
+      type="email"
+      autocomplete="email"
+      placeholder="you@example.com"
+      class="mb-3 w-full rounded border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
+    />
+    <div class="flex items-center gap-3">
+      <button
+        id="tpx-auth-submit"
+        type="button"
+        class="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
+      >
+        Send Magic Link
+      </button>
+      <button
+        id="tpx-auth-logout"
+        type="button"
+        class="hidden rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-800 hover:border-zinc-400 hover:text-zinc-900"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
