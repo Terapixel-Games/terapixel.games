@@ -5,13 +5,64 @@ import games from '../data/games.json';
 import type { Game } from '../types';
 
 const gameList = games as Game[];
+const playableGames = gameList.filter((game) => (game.embedUrl || game.fullScreenUrl) && !game.isComingSoon);
+const featuredGames = playableGames.slice(0, 2);
 ---
 
-<BaseLayout title="Games" description="Explore Terapixel Games and play directly in your browser.">
-  <section class="space-y-10">
-    <h1 class="text-center text-6xl font-light text-zinc-900">Games</h1>
-    <div class="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-      {gameList.map((game) => <GameCard game={game} playMode="fullscreen" />)}
-    </div>
-  </section>
+<BaseLayout
+  title="Home"
+  description="Terapixel Games helps you jump into great browser games fast, stay in flow, and come back to real progress."
+>
+  <div class="shell stack">
+    <section class="hero glass-panel" aria-labelledby="home-hero-title">
+      <p class="hero-eyebrow">Terapixel Games</p>
+      <h1 id="home-hero-title" class="hero-title">Find your next favorite game in seconds.</h1>
+      <p class="hero-copy">
+        Pick a game, jump straight into the fun, and play until there's just time for one more run.
+      </p>
+      <div class="hero-actions">
+        <a href="/games" class="btn btn-primary">Play Games</a>
+        <a href="/shop" class="btn btn-secondary">Visit Shop</a>
+      </div>
+      <p class="hero-note">Quick to start, easy to return to, built for players who value clean experiences.</p>
+      <div class="stat-row" aria-label="Platform highlights">
+        <div class="stat-pill">
+          <strong>{playableGames.length}+ playable titles</strong>
+          <span>Start a round right away</span>
+        </div>
+        <div class="stat-pill">
+          <strong>Progress that sticks</strong>
+          <span>Come back and keep moving</span>
+        </div>
+        <div class="stat-pill">
+          <strong>Comfortable on any screen</strong>
+          <span>Play wherever you are</span>
+        </div>
+      </div>
+    </section>
+
+    {
+      featuredGames.length > 0 && (
+        <section class="section-block" aria-labelledby="featured-heading">
+          <div class="section-head">
+            <h2 id="featured-heading" class="section-title">Featured Games</h2>
+            <p class="section-copy">Two strong picks to jump into right now.</p>
+          </div>
+          <div class="game-grid">
+            {featuredGames.map((game) => <GameCard game={game} playMode="fullscreen" />)}
+          </div>
+        </section>
+      )
+    }
+
+    <section class="section-block" aria-labelledby="library-heading">
+      <div class="section-head">
+        <h2 id="library-heading" class="section-title">Game Library</h2>
+        <p class="section-copy">Browse the full lineup and pick the mood you want today.</p>
+      </div>
+      <div class="game-grid">
+        {gameList.map((game) => <GameCard game={game} />)}
+      </div>
+    </section>
+  </div>
 </BaseLayout>

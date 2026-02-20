@@ -558,6 +558,7 @@
     var logoutButton = document.getElementById("tpx-auth-logout");
     var statusText = document.getElementById("tpx-auth-status");
     var labelText = document.getElementById("tpx-auth-label");
+    var accountNavItem = document.getElementById("tpx-account-nav");
 
     if (!openButton || !modal || !closeButton || !statusText || !labelText) {
       return;
@@ -610,6 +611,10 @@
       var authed = !!(currentState && currentState.authenticated);
       labelText.textContent = formatStateLabel(currentState);
       openButton.textContent = authed ? "Account" : "Login";
+      labelText.classList.toggle("hidden", !authed);
+      if (accountNavItem) {
+        accountNavItem.classList.toggle("hidden", !authed);
+      }
       if (submitButton) {
         submitButton.classList.toggle("hidden", authed);
       }

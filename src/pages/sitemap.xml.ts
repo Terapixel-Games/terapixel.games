@@ -2,7 +2,7 @@ import games from '../data/games.json';
 import type { APIRoute } from 'astro';
 import type { Game } from '../types';
 
-const staticPaths = ['/', '/games', '/contact', '/privacy-policy'];
+const staticPaths = ['/', '/games', '/shop', '/account', '/support', '/contact', '/privacy-policy'];
 
 export const GET: APIRoute = ({ site }) => {
   if (!site) {

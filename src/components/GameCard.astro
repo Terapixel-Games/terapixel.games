@@ -14,39 +14,46 @@ const playTarget = playMode === 'fullscreen' && game.fullScreenUrl ? '_blank' : 
 const playRel = playMode === 'fullscreen' && game.fullScreenUrl ? 'noreferrer noopener' : undefined;
 ---
 
-<article class="space-y-4">
+<article class="game-card">
   {
     isPlayable ? (
-      <a href={detailHref} class="block">
+      <a href={detailHref} class="game-card-media-link">
         <img
           src={game.image}
           alt={game.title}
-          class="h-52 w-full border border-zinc-200 object-cover"
+          class="game-card-media"
           loading="lazy"
           onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
         />
+        <span class="game-card-overlay" aria-hidden="true"></span>
       </a>
     ) : (
-      <img
-        src={game.image}
-        alt={game.title}
-        class="h-52 w-full border border-zinc-200 object-cover"
-        loading="lazy"
-        onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
-      />
+      <div class="game-card-media-link">
+        <img
+          src={game.image}
+          alt={game.title}
+          class="game-card-media"
+          loading="lazy"
+          onerror="this.onerror=null;this.src='/images/placeholder-game.svg';"
+        />
+        <span class="game-card-overlay" aria-hidden="true"></span>
+      </div>
     )
   }
 
-  <div class="space-y-2 text-center">
-    <h2 class="text-[2rem] font-light leading-tight text-zinc-900">{game.title}</h2>
-    {
-      isPlayable ? (
-        <a href={playHref} target={playTarget} rel={playRel} class="text-base underline underline-offset-4">
-          Play Now
-        </a>
-      ) : (
-        <span class="text-base text-zinc-500">Coming Soon</span>
-      )
-    }
+  <div class="game-card-content">
+    <h2>{game.title}</h2>
+    <div class="game-card-actions">
+      {
+        isPlayable ? (
+          <a href={playHref} target={playTarget} rel={playRel} class="btn btn-primary">
+            Play Now
+          </a>
+        ) : (
+          <span class="chip muted">Coming Soon</span>
+        )
+      }
+      <a href={detailHref} class="btn btn-secondary">Details</a>
+    </div>
   </div>
 </article>

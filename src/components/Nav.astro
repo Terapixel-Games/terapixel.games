@@ -1,97 +1,87 @@
 ---
-const { pathname = '/games' } = Astro.props;
+const { pathname = '/' } = Astro.props;
 
 const logoUrl =
   'https://lh3.googleusercontent.com/sitesv/APaQ0SQpb2N1PxGF7N9Iepr_9UbAKup_lJOLK5xjljlAfp4tEhTkxYPqfdu14ETCaiX-pzs4EswA481TbQqKx00S_xDyTkmafajnzGMW6mSLlXTD9HgchqxI_cqpCsNb0_yE13WADpRMlGVrHle3pEVGZwezAW989u6JHGE9Xr8SgvJpIfC-yY4o0ClcwiQ=w16383';
 
 const links = [
+  { href: '/', label: 'Home' },
   { href: '/games', label: 'Games' },
-  { href: '/contact', label: 'Contact' },
-  { href: '/privacy-policy', label: 'Privacy' }
+  { href: '/shop', label: 'Shop' },
+  { href: '/support', label: 'Support' }
 ];
+
+const staticPaths = new Set(['/', '/games', '/shop', '/account', '/support', '/privacy-policy', '/contact']);
+const normalizedPath = pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
+const isGameDetail = /^\/[^/]+$/.test(normalizedPath) && !staticPaths.has(normalizedPath);
+const accountActive = normalizedPath === '/account';
 ---
 
-<header class="sticky top-0 z-50 border-b border-zinc-300 bg-white/95 backdrop-blur">
-  <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4">
-    <a href="/games" class="flex items-center gap-3">
-      <img
-        src={logoUrl}
-        alt="Terapixel"
-        class="h-7 w-7 rounded-sm object-cover"
-        loading="eager"
-        onerror="this.style.display='none';"
-      />
-      <span class="text-base text-zinc-900">Terapixel.games</span>
-    </a>
-
-    <nav aria-label="Main navigation">
-      <ul class="flex items-center gap-6 text-sm text-zinc-700">
+<header class="site-header">
+  <div class="shell">
+    <div class="topbar">
+      <a href="/" class="brand" aria-label="Terapixel Games Home">
+        <img
+          src={logoUrl}
+          alt=""
+          class="brand-mark"
+          loading="eager"
+          onerror="this.style.display='none';"
+        />
+        <span class="brand-name">Terapixel Games</span>
+      </a>
+      <button id="tpx-auth-open" type="button" class="auth-open">
+        Login
+      </button>
+    </div>
+    <nav aria-label="Primary" class="primary-nav">
+      <ul class="nav-links">
         {
           links.map((link) => {
-            const active = pathname === link.href || (link.href === '/games' && pathname === '/');
+            const active =
+              normalizedPath === link.href ||
+              (link.href === '/games' && (normalizedPath === '/games' || isGameDetail));
             return (
               <li>
-                <a
-                  href={link.href}
-                  class:list={[
-                    'underline-offset-4 hover:text-zinc-900',
-                    active ? 'text-zinc-900 underline decoration-[#f47907]' : ''
-                  ]}
-                >
+                <a href={link.href} class="nav-link" aria-current={active ? 'page' : undefined}>
                   {link.label}
                 </a>
               </li>
             );
           })
         }
-        <li class="flex items-center gap-3">
-          <span id="tpx-auth-label" class="hidden text-xs text-zinc-500 sm:inline">Guest</span>
-          <button
-            id="tpx-auth-open"
-            type="button"
-            class="rounded border border-zinc-300 px-3 py-1 text-sm text-zinc-800 hover:border-zinc-400 hover:text-zinc-900"
-          >
-            Login
-          </button>
+        <li id="tpx-account-nav" class="hidden">
+          <a href="/account" class="nav-link" aria-current={accountActive ? 'page' : undefined}>
+            Account
+          </a>
         </li>
       </ul>
+      <div class="auth-caption">
+        <span id="tpx-auth-label" class="auth-label hidden"></span>
+      </div>
     </nav>
   </div>
 </header>
 
-<div id="tpx-auth-modal" class="fixed inset-0 z-50 hidden bg-black/45 p-4">
-  <div class="mx-auto mt-24 w-full max-w-md rounded border border-zinc-200 bg-white p-5 shadow-xl">
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-lg text-zinc-900">Terapixel Account</h2>
-      <button
-        id="tpx-auth-close"
-        type="button"
-        class="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:border-zinc-400 hover:text-zinc-900"
-      >
-        Close
-      </button>
+<div id="tpx-auth-modal" class="hidden modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tpx-auth-title">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="tpx-auth-title">Terapixel Account</h2>
+      <button id="tpx-auth-close" type="button" class="modal-close">Close</button>
     </div>
-    <p id="tpx-auth-status" class="mb-3 text-sm text-zinc-600">Enter email and continue to login.</p>
+    <p id="tpx-auth-status" class="modal-status">Enter email and continue to login.</p>
     <input
       id="tpx-auth-email"
       type="email"
       autocomplete="email"
       placeholder="you@example.com"
-      class="mb-3 w-full rounded border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
+      class="modal-input"
     />
-    <div class="flex items-center gap-3">
-      <button
-        id="tpx-auth-submit"
-        type="button"
-        class="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800"
-      >
+    <div class="modal-actions">
+      <button id="tpx-auth-submit" type="button" class="btn btn-primary">
         Continue Login
       </button>
-      <button
-        id="tpx-auth-logout"
-        type="button"
-        class="hidden rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-800 hover:border-zinc-400 hover:text-zinc-900"
-      >
+      <button id="tpx-auth-logout" type="button" class="btn btn-secondary hidden">
         Logout
       </button>
     </div>

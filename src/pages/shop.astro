@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const products = [
+  {
+    name: 'Starter Pack',
+    price: '$4.99',
+    cadence: 'one-time',
+    description: 'A clean entry pack for players who want to support the studio and unlock account cosmetics.',
+    benefits: ['Exclusive avatar frame', 'Early access shop drops', 'Priority support queue']
+  },
+  {
+    name: 'Studio Pass',
+    price: '$9.99',
+    cadence: 'monthly',
+    description: 'A recurring support tier for active players who want consistent perks across the platform.',
+    benefits: ['Monthly cosmetic bundle', 'Featured profile badge', 'Behind-the-scenes updates']
+  },
+  {
+    name: 'Founder Bundle',
+    price: '$29.00',
+    cadence: 'one-time',
+    description: 'A premium one-time bundle designed for early supporters helping us scale new releases.',
+    benefits: ['All Starter Pack perks', 'Permanent founder badge', 'Name listed in studio credits']
+  }
+];
+---
+
+<BaseLayout title="Shop" description="Browse clear, trustworthy support packs from the Terapixel Games shop.">
+  <div class="shell stack">
+    <header class="page-head">
+      <h1 class="page-title">Shop</h1>
+      <p class="page-copy">
+        Structured offers with clear value. No cramped layouts, no hidden details, and no checkout surprises.
+      </p>
+    </header>
+
+    <section class="product-grid" aria-label="Shop products">
+      {
+        products.map((product) => (
+          <article class="glass-panel product-card">
+            <h2>{product.name}</h2>
+            <p class="product-price">
+              {product.price} <small>/{product.cadence}</small>
+            </p>
+            <p class="product-copy">{product.description}</p>
+            <ul class="product-list">
+              {product.benefits.map((benefit) => <li>{benefit}</li>)}
+            </ul>
+            <div class="hero-actions">
+              <a href="/support" class="btn btn-primary">Purchase Support</a>
+            </div>
+          </article>
+        ))
+      }
+    </section>
+  </div>
+</BaseLayout>

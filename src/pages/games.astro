@@ -7,11 +7,19 @@ import type { Game } from '../types';
 const gameList = games as Game[];
 ---
 
-<BaseLayout title="Games" description="Explore Terapixel Games and play directly in your browser.">
-  <section class="space-y-10">
-    <h1 class="text-center text-6xl font-light text-zinc-900">Games</h1>
-    <div class="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-      {gameList.map((game) => <GameCard game={game} />)}
-    </div>
-  </section>
+<BaseLayout title="Games" description="Explore the Terapixel Games platform and play browser games instantly.">
+  <div class="shell stack">
+    <header class="page-head">
+      <h1 class="page-title">Games</h1>
+      <p class="page-copy">
+        Unified cards, clear status, and no visual noise. Pick a game and play now, or open details first.
+      </p>
+    </header>
+
+    <section aria-label="All games" class="section-block">
+      <div class="game-grid">
+        {gameList.map((game) => <GameCard game={game} playMode="fullscreen" />)}
+      </div>
+    </section>
+  </div>
 </BaseLayout>

@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Account" description="Manage your Terapixel account profile, username, and support links.">
+  <div class="shell stack account-shell">
+    <header class="page-head">
+      <h1 class="page-title">Account</h1>
+      <p class="page-copy">Profile-first layout with clear account state. Bonus has been replaced with Username.</p>
+    </header>
+
+    <section class="glass-panel profile-card" aria-label="Profile summary">
+      <div class="avatar" id="account-avatar" aria-hidden="true">TP</div>
+      <div class="profile-meta">
+        <h2 id="account-username-headline">Guest</h2>
+        <p id="account-status-line">Login to sync profile across all games.</p>
+      </div>
+      <div class="hero-actions" style="margin-left:auto;">
+        <button id="account-open-auth" type="button" class="btn btn-primary">Open Account</button>
+      </div>
+    </section>
+
+    <section class="identity-grid" aria-label="Identity details">
+      <article class="glass-panel identity-tile">
+        <span class="tile-label">Username</span>
+        <p id="account-username" class="tile-value">Not set</p>
+      </article>
+      <article class="glass-panel identity-tile">
+        <span class="tile-label">Email</span>
+        <p id="account-email" class="tile-value">Not signed in</p>
+      </article>
+      <article class="glass-panel identity-tile">
+        <span class="tile-label">Account Status</span>
+        <p id="account-auth-state" class="tile-value">Guest</p>
+      </article>
+    </section>
+
+    <section class="quick-grid" aria-label="Account actions">
+      <article class="glass-panel quick-card">
+        <h2>Store Access</h2>
+        <p>Open curated packs and support options built for clarity.</p>
+        <div class="hero-actions">
+          <a href="/shop" class="btn btn-secondary">Go to Shop</a>
+        </div>
+      </article>
+      <article class="glass-panel quick-card">
+        <h2>Need Help</h2>
+        <p>Get support for login, purchases, and gameplay issues.</p>
+        <div class="hero-actions">
+          <a href="/support" class="btn btn-secondary">Open Support</a>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script is:inline>
+    (function () {
+      function getPreferredName(state) {
+        if (!state) {
+          return 'Guest';
+        }
+        if (state.terapixel_display_name) {
+          return String(state.terapixel_display_name).trim();
+        }
+        if (state.terapixel_email) {
+          return String(state.terapixel_email).split('@')[0];
+        }
+        if (state.terapixel_user_id) {
+          return 'User ' + String(state.terapixel_user_id).slice(0, 8);
+        }
+        return 'Guest';
+      }
+
+      function initials(value) {
+        const source = String(value || 'Guest').trim();
+        if (!source) {
+          return 'TP';
+        }
+        const parts = source.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return source.slice(0, 2).toUpperCase();
+      }
+
+      function render(state) {
+        const username = getPreferredName(state);
+        const email = state && state.terapixel_email ? String(state.terapixel_email) : 'Not signed in';
+        const authed = Boolean(state && state.authenticated);
+
+        const usernameHeadline = document.getElementById('account-username-headline');
+        const usernameCell = document.getElementById('account-username');
+        const emailCell = document.getElementById('account-email');
+        const authCell = document.getElementById('account-auth-state');
+        const statusLine = document.getElementById('account-status-line');
+        const avatar = document.getElementById('account-avatar');
+
+        if (usernameHeadline) usernameHeadline.textContent = username;
+        if (usernameCell) usernameCell.textContent = username;
+        if (emailCell) emailCell.textContent = email;
+        if (authCell) authCell.textContent = authed ? 'Authenticated' : 'Guest';
+        if (statusLine) statusLine.textContent = authed ? 'Identity is synced across supported titles.' : 'Login to sync profile across all games.';
+        if (avatar) avatar.textContent = initials(username);
+      }
+
+      function connectIdentity(attempt) {
+        const identity = window.TerapixelIdentity;
+        if (identity && typeof identity.getState === 'function' && typeof identity.subscribe === 'function') {
+          render(identity.getState());
+          identity.subscribe(function (state) {
+            render(state);
+          });
+          return;
+        }
+
+        if (attempt < 30) {
+          window.setTimeout(function () {
+            connectIdentity(attempt + 1);
+          }, 120);
+          return;
+        }
+
+        render(null);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const openAccount = document.getElementById('account-open-auth');
+        if (openAccount) {
+          openAccount.addEventListener('click', function () {
+            const globalOpen = document.getElementById('tpx-auth-open');
+            if (globalOpen instanceof HTMLElement) {
+              globalOpen.click();
+            }
+          });
+        }
+
+        connectIdentity(0);
+      });
+    })();
+  </script>
+</BaseLayout>
