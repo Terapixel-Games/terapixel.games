@@ -14,6 +14,10 @@ on:
   repository_dispatch:
     types: [lumarush_main_updated]
 
+concurrency:
+  group: sync-web-builds-main
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -24,6 +28,9 @@ jobs:
     steps:
       - name: Checkout terapixel.games
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Resolve payload values
         id: vars
@@ -124,6 +131,7 @@ jobs:
       - name: Commit and push changes
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -134,4 +142,18 @@ jobs:
 
           git add public/play/lumarush src/data/games.json
           git commit -m "sync: update LumaRush web build"
-          git push
+
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Push failed after 3 attempts"
+              exit 1
+            fi
+
+            echo "Push rejected, rebasing onto origin/main and retrying (attempt $((attempt + 1)))"
+            git fetch origin main
+            git rebase origin/main
+          done
