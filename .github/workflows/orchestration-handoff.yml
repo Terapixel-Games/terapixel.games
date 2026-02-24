@@ -1,0 +1,14 @@
+name: Orchestration Handoff
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  run:
+    uses: Terapixel-Games/studio-orchestration/.github/workflows/orchestration-handoff.yml@main
+    secrets: inherit

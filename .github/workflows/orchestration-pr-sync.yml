@@ -1,0 +1,15 @@
+name: Orchestration PR Sync
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, closed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  run:
+    uses: Terapixel-Games/studio-orchestration/.github/workflows/orchestration-pr-sync.yml@main
+    secrets: inherit

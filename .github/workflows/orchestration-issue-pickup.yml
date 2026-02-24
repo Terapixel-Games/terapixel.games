@@ -1,0 +1,14 @@
+name: Orchestration Issue Pickup
+
+on:
+  issues:
+    types: [opened, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  run:
+    uses: Terapixel-Games/studio-orchestration/.github/workflows/orchestration-issue-pickup.yml@main
+    secrets: inherit
