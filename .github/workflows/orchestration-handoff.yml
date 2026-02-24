@@ -12,47 +12,34 @@ jobs:
   handoff:
     runs-on: ubuntu-latest
     steps:
-      - name: Process handoff commands
+      - name: Apply handoff command
         uses: actions/github-script@v7
         with:
           script: |
             const issue = context.payload.issue;
             const comment = context.payload.comment;
-            if (!issue || !comment) {
-              core.info('No issue_comment payload found.');
-              return;
-            }
+            if (!issue || !comment) return;
 
             const actor = comment.user?.login || '';
-            if (actor.endsWith('[bot]')) {
-              core.info('Ignoring bot comment.');
-              return;
-            }
+            if (actor.endsWith('[bot]')) return;
 
-            const association = comment.author_association;
-            const trustedAssociations = ['OWNER', 'MEMBER', 'COLLABORATOR'];
-
+            const association = comment.author_association || 'NONE';
+            const trusted = ['OWNER', 'MEMBER', 'COLLABORATOR'];
             const raw = (comment.body || '').trim();
-            if (!raw.startsWith('/')) {
-              core.info('No command found.');
-              return;
-            }
-
-            if (!trustedAssociations.includes(association)) {
-              core.info(`Ignoring command from ${association}.`);
-              return;
-            }
+            if (!raw.startsWith('/')) return;
+            if (!trusted.includes(association)) return;
 
             const ownerLabels = [
-              'agent:ceo', 'agent:cto', 'agent:cfo', 'agent:cmo', 'agent:product',
-              'agent:pm', 'agent:devops', 'agent:seniordev', 'agent:juniordev'
+              'agent:ceo', 'agent:cto', 'agent:cfo', 'agent:cmo',
+              'agent:product', 'agent:pm', 'agent:devops',
+              'agent:seniordev', 'agent:juniordev'
             ];
             const statusLabels = [
               'status:triage', 'status:ready', 'status:in-progress',
               'status:needs-review', 'status:blocked', 'status:done'
             ];
 
-            const handoffOwners = {
+            const handoffTargets = {
               ceo: 'agent:ceo',
               cto: 'agent:cto',
               cfo: 'agent:cfo',
@@ -65,78 +52,53 @@ jobs:
               junior: 'agent:juniordev'
             };
 
-            const setExclusive = (labels, family, desired) => {
-              const filtered = labels.filter((name) => !family.includes(name));
-              if (desired) {
-                filtered.push(desired);
-              }
-              return [...new Set(filtered)];
+            const setExclusive = (labels, family, selected) => {
+              const filtered = labels.filter((l) => !family.includes(l));
+              if (selected) filtered.push(selected);
+              return Array.from(new Set(filtered));
             };
 
-            const currentLabels = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
-            let nextLabels = [...new Set(currentLabels)];
+            const current = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
+            let next = Array.from(new Set(current));
 
-            let actionSummary = null;
             let targetOwner = null;
             let targetStatus = null;
-            let blockReason = null;
+            let actionText = null;
+            let blockReason = '';
 
             const handoffMatch = raw.match(/^\/handoff\s+([a-z]+)/i);
             if (handoffMatch) {
               const role = handoffMatch[1].toLowerCase();
-              targetOwner = handoffOwners[role] || null;
-              if (!targetOwner) {
-                core.info(`Unknown handoff role: ${role}`);
-                return;
-              }
+              targetOwner = handoffTargets[role] || null;
+              if (!targetOwner) return;
               targetStatus = 'status:ready';
-              actionSummary = `handoff to \`${targetOwner}\``;
-            }
-
-            if (/^\/ready\b/i.test(raw)) {
+              actionText = 'handoff';
+            } else if (/^\/ready\b/i.test(raw)) {
               targetStatus = 'status:ready';
-              actionSummary = 'marked as ready';
-            }
-
-            if (/^\/start\b/i.test(raw)) {
+              actionText = 'ready';
+            } else if (/^\/start\b/i.test(raw)) {
               targetStatus = 'status:in-progress';
-              actionSummary = 'marked as in progress';
-            }
-
-            if (/^\/review\b/i.test(raw)) {
+              actionText = 'start';
+            } else if (/^\/review\b/i.test(raw)) {
               targetStatus = 'status:needs-review';
-              actionSummary = 'moved to review';
-            }
-
-            if (/^\/done\b/i.test(raw)) {
+              actionText = 'review';
+            } else if (/^\/done\b/i.test(raw)) {
               targetStatus = 'status:done';
-              actionSummary = 'marked as done';
-            }
-
-            const blockMatch = raw.match(/^\/block\s+(.+)/i);
-            if (blockMatch) {
+              actionText = 'done';
+            } else {
+              const blockMatch = raw.match(/^\/block\s+(.+)/i);
+              if (!blockMatch) return;
               targetStatus = 'status:blocked';
               blockReason = blockMatch[1].trim();
-              actionSummary = 'marked as blocked';
+              actionText = 'block';
             }
 
-            if (!actionSummary) {
-              core.info('No supported orchestration command found.');
-              return;
-            }
+            if (targetOwner) next = setExclusive(next, ownerLabels, targetOwner);
+            if (targetStatus) next = setExclusive(next, statusLabels, targetStatus);
 
-            if (targetOwner) {
-              nextLabels = setExclusive(nextLabels, ownerLabels, targetOwner);
-            }
-            if (targetStatus) {
-              nextLabels = setExclusive(nextLabels, statusLabels, targetStatus);
-            }
-
-            const currentSorted = [...new Set(currentLabels)].sort();
-            const nextSorted = [...new Set(nextLabels)].sort();
-            const labelsChanged = JSON.stringify(currentSorted) !== JSON.stringify(nextSorted);
-
-            if (labelsChanged) {
+            const curSorted = Array.from(new Set(current)).sort();
+            const nextSorted = Array.from(new Set(next)).sort();
+            if (JSON.stringify(curSorted) !== JSON.stringify(nextSorted)) {
               await github.rest.issues.setLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -146,20 +108,21 @@ jobs:
             }
 
             const marker = '<!-- orchestration:handoff -->';
-            const reasonLine = blockReason ? `\n- Block reason: ${blockReason}` : '';
-            const body = `${marker}
-
-### Orchestration Handoff
-- Command: \`${raw}\`
-- Actor: @${actor}
-- Result: ${actionSummary}
-- Owner: ${targetOwner ? `\`${targetOwner}\`` : 'unchanged'}
-- Status: ${targetStatus ? `\`${targetStatus}\`` : 'unchanged'}${reasonLine}
-`;
+            const lines = [
+              marker,
+              '',
+              '### Orchestration Handoff',
+              '- Command: ' + raw,
+              '- Actor: @' + actor,
+              '- Action: ' + actionText,
+              '- Owner: ' + (targetOwner || 'unchanged'),
+              '- Status: ' + (targetStatus || 'unchanged')
+            ];
+            if (blockReason) lines.push('- Block reason: ' + blockReason);
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body
+              body: lines.join('\n')
             });

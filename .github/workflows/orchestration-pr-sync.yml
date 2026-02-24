@@ -13,15 +13,12 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync linked issue status from PR lifecycle
+      - name: Update linked issue status from PR lifecycle
         uses: actions/github-script@v7
         with:
           script: |
             const pr = context.payload.pull_request;
-            if (!pr) {
-              core.info('No pull request payload found.');
-              return;
-            }
+            if (!pr) return;
 
             const action = context.payload.action;
             let targetStatus = null;
@@ -31,25 +28,16 @@ jobs:
               targetStatus = 'status:needs-review';
             } else if (action === 'closed') {
               targetStatus = pr.merged ? 'status:done' : 'status:ready';
-            }
-
-            if (!targetStatus) {
-              core.info(`No status transition for action: ${action}`);
+            } else {
               return;
             }
 
-            const bodyText = `${pr.title || ''}\n${pr.body || ''}`;
+            const text = (pr.title || '') + '\n' + (pr.body || '');
             const regex = /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+((?:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)?#\d+)/gi;
-            const refs = new Set();
+            const refs = [];
             let match;
-            while ((match = regex.exec(bodyText)) !== null) {
-              refs.add(match[1]);
-            }
-
-            if (refs.size === 0) {
-              core.info('No linked issues found in PR body.');
-              return;
-            }
+            while ((match = regex.exec(text)) !== null) refs.push(match[1]);
+            if (refs.length === 0) return;
 
             const statusLabels = [
               'status:triage', 'status:ready', 'status:in-progress',
@@ -58,9 +46,13 @@ jobs:
 
             const parseRef = (ref) => {
               if (ref.includes('/')) {
-                const [repoPart, numberPart] = ref.split('#');
-                const [owner, repo] = repoPart.split('/');
-                return { owner, repo, issue_number: Number(numberPart) };
+                const parts = ref.split('#');
+                const repoParts = parts[0].split('/');
+                return {
+                  owner: repoParts[0],
+                  repo: repoParts[1],
+                  issue_number: Number(parts[1])
+                };
               }
               return {
                 owner: context.repo.owner,
@@ -69,80 +61,67 @@ jobs:
               };
             };
 
-            for (const ref of refs) {
+            for (const ref of Array.from(new Set(refs))) {
               const target = parseRef(ref);
-              if (!target.owner || !target.repo || !target.issue_number) {
-                core.warning(`Skipping invalid issue reference: ${ref}`);
-                continue;
-              }
+              if (!target.owner || !target.repo || !target.issue_number) continue;
 
               let issue;
               try {
-                const issueResponse = await github.rest.issues.get(target);
-                issue = issueResponse.data;
-              } catch (error) {
-                core.warning(`Unable to load ${ref}: ${error.message}`);
+                issue = (await github.rest.issues.get(target)).data;
+              } catch {
                 continue;
               }
+              if (issue.pull_request) continue;
 
-              if (issue.pull_request) {
-                core.info(`Skipping ${ref} because it is a pull request.`);
-                continue;
-              }
-
-              const currentLabels = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
-              const nextLabels = [...new Set([
-                ...currentLabels.filter((l) => !statusLabels.includes(l)),
+              const current = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
+              const next = Array.from(new Set([
+                ...current.filter((l) => !statusLabels.includes(l)),
                 targetStatus
-              ])];
+              ]));
 
-              const currentSorted = [...new Set(currentLabels)].sort();
-              const nextSorted = [...new Set(nextLabels)].sort();
-              const changed = JSON.stringify(currentSorted) !== JSON.stringify(nextSorted);
-
-              if (changed) {
-                await github.rest.issues.setLabels({ ...target, labels: nextSorted });
-              }
-
-              const marker = `<!-- orchestration:pr-sync:${pr.number} -->`;
-              const stateText = pr.merged ? 'merged' : action;
-              const commentBody = `${marker}
-
-### Orchestration PR Sync
-- PR: #${pr.number} (${pr.html_url})
-- Event: \`${action}\`
-- State: \`${stateText}\`
-- Issue status set to: \`${targetStatus}\`
-`;
-
-              let existing = null;
-              try {
-                const comments = await github.paginate(github.rest.issues.listComments, {
+              const curSorted = Array.from(new Set(current)).sort();
+              const nextSorted = Array.from(new Set(next)).sort();
+              if (JSON.stringify(curSorted) !== JSON.stringify(nextSorted)) {
+                await github.rest.issues.setLabels({
                   owner: target.owner,
                   repo: target.repo,
                   issue_number: target.issue_number,
-                  per_page: 100
+                  labels: nextSorted
                 });
-                existing = comments.find((c) => (c.body || '').includes(marker));
-              } catch (error) {
-                core.warning(`Unable to inspect comments for ${ref}: ${error.message}`);
               }
+
+              const marker = '<!-- orchestration:pr-sync:' + pr.number + ' -->';
+              const lines = [
+                marker,
+                '',
+                '### Orchestration PR Sync',
+                '- PR: #' + pr.number + ' ' + pr.html_url,
+                '- Event: ' + action,
+                '- Status set: ' + targetStatus
+              ];
+              const body = lines.join('\n');
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: target.owner,
+                repo: target.repo,
+                issue_number: target.issue_number,
+                per_page: 100
+              });
+              const existing = comments.find((c) => (c.body || '').includes(marker));
 
               if (existing) {
                 await github.rest.issues.updateComment({
                   owner: target.owner,
                   repo: target.repo,
                   comment_id: existing.id,
-                  body: commentBody
+                  body
                 });
               } else {
                 await github.rest.issues.createComment({
                   owner: target.owner,
                   repo: target.repo,
                   issue_number: target.issue_number,
-                  body: commentBody
+                  body
                 });
               }
-
-              core.info(`Updated ${ref} -> ${targetStatus}`);
             }
