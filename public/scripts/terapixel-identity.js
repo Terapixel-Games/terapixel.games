@@ -6,21 +6,6 @@
   var GLOBAL_IDENTITY_KEY = "terapixel_identity_v1";
   var KNOWN_SAVE_KEYS = ["lumarush_save_v1", "color_crunch_save_v1"];
   var AUTH_MARKER_KEY = "tpx_auth";
-  var URL_USER_ID_KEYS = [
-    "terapixel_user_id",
-    "tpx_user_id",
-    "profile_id",
-    "player_id",
-    "playerId",
-    "user_id",
-  ];
-  var URL_EMAIL_KEYS = ["terapixel_email", "email"];
-  var URL_DISPLAY_KEYS = [
-    "terapixel_display_name",
-    "display_name",
-    "displayName",
-    "name",
-  ];
   var URL_LOGOUT_KEYS = ["logout", "logged_out", "tpx_logout"];
 
   var configFromWindow = window.__TPX_AUTH_CONFIG || {};
@@ -311,50 +296,12 @@
       return parseBooleanLike(value);
     });
 
-    var userId = "";
-    for (var i = 0; i < URL_USER_ID_KEYS.length; i += 1) {
-      userId = String(url.searchParams.get(URL_USER_ID_KEYS[i]) || "").trim();
-      if (userId) {
-        break;
-      }
-    }
-
-    var email = "";
-    for (var j = 0; j < URL_EMAIL_KEYS.length; j += 1) {
-      email = String(url.searchParams.get(URL_EMAIL_KEYS[j]) || "").trim().toLowerCase();
-      if (email) {
-        break;
-      }
-    }
-
-    var displayName = "";
-    for (var k = 0; k < URL_DISPLAY_KEYS.length; k += 1) {
-      displayName = String(url.searchParams.get(URL_DISPLAY_KEYS[k]) || "").trim();
-      if (displayName) {
-        break;
-      }
-    }
-
     if (logoutRequested) {
       clearIdentity("url:logout");
       changed = true;
-    } else if (userId) {
-      setAuthenticatedIdentity(
-        {
-          terapixel_user_id: userId,
-          terapixel_display_name: displayName,
-          terapixel_email: email,
-        },
-        "url:identity"
-      );
-      changed = true;
     }
 
-    var keysToRemove = [AUTH_MARKER_KEY]
-      .concat(URL_LOGOUT_KEYS)
-      .concat(URL_USER_ID_KEYS)
-      .concat(URL_EMAIL_KEYS)
-      .concat(URL_DISPLAY_KEYS);
+    var keysToRemove = [AUTH_MARKER_KEY].concat(URL_LOGOUT_KEYS);
     keysToRemove.forEach(function (key) {
       if (url.searchParams.has(key)) {
         url.searchParams.delete(key);
@@ -369,7 +316,7 @@
 
     return {
       sawAuthMarker: sawAuthMarker,
-      hadUrlIdentity: !!userId || logoutRequested,
+      hadUrlIdentity: logoutRequested,
     };
   }
 
