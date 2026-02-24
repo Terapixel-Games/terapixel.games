@@ -1,0 +1,55 @@
+name: Deploy Production
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "deploy-prod-gh-pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production site
+        env:
+          PUBLIC_TPX_IDENTITY_LOGIN_URL: ${{ vars.PUBLIC_TPX_IDENTITY_LOGIN_URL }}
+          PUBLIC_TPX_IDENTITY_LOGOUT_URL: ${{ vars.PUBLIC_TPX_IDENTITY_LOGOUT_URL }}
+          PUBLIC_TPX_IDENTITY_SESSION_URL: ${{ vars.PUBLIC_TPX_IDENTITY_SESSION_URL }}
+          PUBLIC_TPX_IDENTITY_RETURN_PARAM: ${{ vars.PUBLIC_TPX_IDENTITY_RETURN_PARAM }}
+          PUBLIC_TPX_IDENTITY_EMAIL_PARAM: ${{ vars.PUBLIC_TPX_IDENTITY_EMAIL_PARAM }}
+          PUBLIC_TPX_IDENTITY_LOGOUT_METHOD: ${{ vars.PUBLIC_TPX_IDENTITY_LOGOUT_METHOD }}
+          PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD: ${{ vars.PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD }}
+        run: npm run build
+
+      - name: Deploy production to gh-pages root
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: dist
+          clean: true
+          clean-exclude: |
+            staging
+          single-commit: false
+          commit-message: "deploy: prod from ${{ github.ref_name }} (${{ github.sha }})"

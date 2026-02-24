@@ -1,0 +1,120 @@
+name: Deploy Failure To Issue
+
+on:
+  workflow_run:
+    workflows: ["Deploy Staging", "Deploy Production"]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-or-update-issue:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create or update deploy failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const run = context.payload.workflow_run;
+
+            const isProd = run.name === 'Deploy Production';
+            const envName = isProd ? 'prod' : 'staging';
+            const envLabel = isProd ? 'prod-failure' : 'staging-failure';
+            const shortSha = (run.head_sha || '').slice(0, 7);
+
+            const requiredLabels = [envLabel, 'ci', 'deploy', 'agent:devops', 'sev:P1', 'status:triage'];
+            const labelDefinitions = {
+              'prod-failure': { color: 'B60205', description: 'Production deployment or runtime failure requiring urgent triage.' },
+              'staging-failure': { color: 'D93F0B', description: 'Staging deployment or runtime failure.' },
+              'ci': { color: 'FBCA04', description: 'Continuous integration workflow issue.' },
+              'deploy': { color: 'C2E0C6', description: 'Deployment pipeline work or failure.' },
+              'agent:devops': { color: '7057FF', description: 'Owned by DevOps agent.' },
+              'sev:P1': { color: 'D93F0B', description: 'High impact. Rapid response required.' },
+              'status:triage': { color: 'EDEDED', description: 'New issue awaiting triage.' }
+            };
+
+            for (const [name, meta] of Object.entries(labelDefinitions)) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+                await github.rest.issues.updateLabel({
+                  owner,
+                  repo,
+                  name,
+                  new_name: name,
+                  color: meta.color,
+                  description: meta.description
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({ owner, repo, name, color: meta.color, description: meta.description });
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            let tagName = '';
+            if (isProd && run.head_sha) {
+              const tags = await github.paginate(github.rest.repos.listTags, {
+                owner,
+                repo,
+                per_page: 100
+              });
+              const match = tags.find((t) => t?.commit?.sha === run.head_sha && /^v/.test(t.name));
+              tagName = match ? match.name : '';
+            }
+
+            const refText = tagName || run.head_branch || run.head_sha || 'unknown-ref';
+            const failureKey = `deploy-failure:${envName}:${run.name}:${refText}`;
+            const marker = `<!-- ${failureKey} -->`;
+            const title = `🚨 [${envName}] deploy failed: ${run.name} ${shortSha}`;
+            const runLine = `- ${new Date().toISOString()}: [run ${run.id}](${run.html_url})`;
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              labels: `${envLabel},ci,deploy,agent:devops`,
+              per_page: 100
+            });
+
+            const existing = openIssues.find((issue) => (issue.body || '').includes(marker));
+
+            const issueBody = `${marker}\n\n## Deploy Failure\n- Environment: **${envName}**\n- Workflow: **${run.name}**\n- Run URL: ${run.html_url}\n- SHA: \`${run.head_sha || 'unknown'}\`\n- Tag: \`${tagName || 'n/a'}\`\n- Ref: \`${refText}\`\n- Owner: DevOps (\`agent:devops\`)\n\n## Checklist\n- [ ] Triage and acknowledge\n- [ ] Identify failing step and attach logs\n- [ ] Apply fix or rollback\n- [ ] Verify successful redeploy\n- [ ] Add prevention note\n\n## Failure Occurrences\n${runLine}\n`;
+
+            if (existing) {
+              const hasRunAlready = (existing.body || '').includes(`[run ${run.id}]`);
+              const updatedBody = hasRunAlready
+                ? existing.body
+                : `${existing.body || ''}\n${runLine}`;
+
+              const existingLabelNames = (existing.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+              const mergedLabels = Array.from(new Set([...existingLabelNames, ...requiredLabels]));
+
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                title,
+                body: updatedBody,
+                labels: mergedLabels
+              });
+              core.info(`Updated existing issue #${existing.number}`);
+              return;
+            }
+
+            const created = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body: issueBody,
+              labels: requiredLabels
+            });
+
+            core.info(`Created issue #${created.data.number}`);
