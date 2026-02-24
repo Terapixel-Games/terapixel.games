@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Account | Terapixel Games</title><meta name="description" content="Manage your Terapixel account profile, username, and support links."><link rel="canonical" href="https://terapixel.games/staging/account/"><meta property="og:type" content="website"><meta property="og:site_name" content="Terapixel Games"><meta property="og:title" content="Account | Terapixel Games"><meta property="og:description" content="Manage your Terapixel account profile, username, and support links."><meta property="og:url" content="https://terapixel.games/staging/account/"><meta property="og:image" content="https://terapixel.games/images/games/lumarush.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Account | Terapixel Games"><meta name="twitter:description" content="Manage your Terapixel account profile, username, and support links."><meta name="twitter:image" content="https://terapixel.games/images/games/lumarush.jpg"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8413230766502262" crossorigin="anonymous"></script><script>
+      window.__TPX_AUTH_CONFIG = {
+        loginUrl: {JSON.stringify(identityLoginUrl)},
+        logoutUrl: {JSON.stringify(identityLogoutUrl)},
+        sessionUrl: {JSON.stringify(identitySessionUrl)},
+        returnParam: {JSON.stringify(identityReturnParam)},
+        emailParam: {JSON.stringify(identityEmailParam)},
+        logoutMethod: {JSON.stringify(identityLogoutMethod)},
+        hydrateFromSessionOnLoad: {JSON.stringify(identityHydrateSessionOnLoad)}
+      };
+    </script><script src="/scripts/terapixel-identity.js" defer></script><link rel="stylesheet" href="/staging/_astro/_slug_.C-QxJ7sI.css"></head> <body class="site-body"> <a href="#main-content" class="skip-link">Skip to content</a> <header class="site-header"> <div class="shell"> <div class="topbar"> <a href="/" class="brand" aria-label="Terapixel Games Home"> <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SQpb2N1PxGF7N9Iepr_9UbAKup_lJOLK5xjljlAfp4tEhTkxYPqfdu14ETCaiX-pzs4EswA481TbQqKx00S_xDyTkmafajnzGMW6mSLlXTD9HgchqxI_cqpCsNb0_yE13WADpRMlGVrHle3pEVGZwezAW989u6JHGE9Xr8SgvJpIfC-yY4o0ClcwiQ=w16383" alt="" class="brand-mark" loading="eager" onerror="this.style.display='none';"> <span class="brand-name">Terapixel Games</span> </a> <button id="tpx-auth-open" type="button" class="auth-open">
+Login
+</button> </div> <nav aria-label="Primary" class="primary-nav"> <ul class="nav-links"> <li> <a href="/" class="nav-link"> Home </a> </li><li> <a href="/games" class="nav-link"> Games </a> </li><li> <a href="/shop" class="nav-link"> Shop </a> </li><li> <a href="/support" class="nav-link"> Support </a> </li> <li id="tpx-account-nav" class="hidden"> <a href="/account" class="nav-link">
+Account
+</a> </li> </ul> <div class="auth-caption"> <span id="tpx-auth-label" class="auth-label hidden"></span> </div> </nav> </div> </header> <div id="tpx-auth-modal" class="hidden modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tpx-auth-title"> <div class="modal-card"> <div class="modal-head"> <h2 id="tpx-auth-title">Terapixel Account</h2> <button id="tpx-auth-close" type="button" class="modal-close">Close</button> </div> <p id="tpx-auth-status" class="modal-status">Enter email and continue to login.</p> <input id="tpx-auth-email" type="email" autocomplete="email" placeholder="you@example.com" class="modal-input"> <div class="modal-actions"> <button id="tpx-auth-submit" type="button" class="btn btn-primary">
+Continue Login
+</button> <button id="tpx-auth-logout" type="button" class="btn btn-secondary hidden">
+Logout
+</button> </div> </div> </div> <main id="main-content" class="site-main">  <div class="shell stack account-shell"> <header class="page-head"> <h1 class="page-title">Account</h1> <p class="page-copy">Profile-first layout with clear account state. Bonus has been replaced with Username.</p> </header> <section class="glass-panel profile-card" aria-label="Profile summary"> <div class="avatar" id="account-avatar" aria-hidden="true">TP</div> <div class="profile-meta"> <h2 id="account-username-headline">Guest</h2> <p id="account-status-line">Login to sync profile across all games.</p> </div> <div class="hero-actions" style="margin-left:auto;"> <button id="account-open-auth" type="button" class="btn btn-primary">Open Account</button> </div> </section> <section class="identity-grid" aria-label="Identity details"> <article class="glass-panel identity-tile"> <span class="tile-label">Username</span> <p id="account-username" class="tile-value">Not set</p> </article> <article class="glass-panel identity-tile"> <span class="tile-label">Email</span> <p id="account-email" class="tile-value">Not signed in</p> </article> <article class="glass-panel identity-tile"> <span class="tile-label">Account Status</span> <p id="account-auth-state" class="tile-value">Guest</p> </article> </section> <section class="quick-grid" aria-label="Account actions"> <article class="glass-panel quick-card"> <h2>Store Access</h2> <p>Open curated packs and support options built for clarity.</p> <div class="hero-actions"> <a href="/shop" class="btn btn-secondary">Go to Shop</a> </div> </article> <article class="glass-panel quick-card"> <h2>Need Help</h2> <p>Get support for login, purchases, and gameplay issues.</p> <div class="hero-actions"> <a href="/support" class="btn btn-secondary">Open Support</a> </div> </article> </section> </div> <script>
+    (function () {
+      function getPreferredName(state) {
+        if (!state) {
+          return 'Guest';
+        }
+        if (state.terapixel_display_name) {
+          return String(state.terapixel_display_name).trim();
+        }
+        if (state.terapixel_email) {
+          return String(state.terapixel_email).split('@')[0];
+        }
+        if (state.terapixel_user_id) {
+          return 'User ' + String(state.terapixel_user_id).slice(0, 8);
+        }
+        return 'Guest';
+      }
+
+      function initials(value) {
+        const source = String(value || 'Guest').trim();
+        if (!source) {
+          return 'TP';
+        }
+        const parts = source.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+          return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return source.slice(0, 2).toUpperCase();
+      }
+
+      function render(state) {
+        const username = getPreferredName(state);
+        const email = state && state.terapixel_email ? String(state.terapixel_email) : 'Not signed in';
+        const authed = Boolean(state && state.authenticated);
+
+        const usernameHeadline = document.getElementById('account-username-headline');
+        const usernameCell = document.getElementById('account-username');
+        const emailCell = document.getElementById('account-email');
+        const authCell = document.getElementById('account-auth-state');
+        const statusLine = document.getElementById('account-status-line');
+        const avatar = document.getElementById('account-avatar');
+
+        if (usernameHeadline) usernameHeadline.textContent = username;
+        if (usernameCell) usernameCell.textContent = username;
+        if (emailCell) emailCell.textContent = email;
+        if (authCell) authCell.textContent = authed ? 'Authenticated' : 'Guest';
+        if (statusLine) statusLine.textContent = authed ? 'Identity is synced across supported titles.' : 'Login to sync profile across all games.';
+        if (avatar) avatar.textContent = initials(username);
+      }
+
+      function connectIdentity(attempt) {
+        const identity = window.TerapixelIdentity;
+        if (identity && typeof identity.getState === 'function' && typeof identity.subscribe === 'function') {
+          render(identity.getState());
+          identity.subscribe(function (state) {
+            render(state);
+          });
+          return;
+        }
+
+        if (attempt < 30) {
+          window.setTimeout(function () {
+            connectIdentity(attempt + 1);
+          }, 120);
+          return;
+        }
+
+        render(null);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const openAccount = document.getElementById('account-open-auth');
+        if (openAccount) {
+          openAccount.addEventListener('click', function () {
+            const globalOpen = document.getElementById('tpx-auth-open');
+            if (globalOpen instanceof HTMLElement) {
+              globalOpen.click();
+            }
+          });
+        }
+
+        connectIdentity(0);
+      });
+    })();
+  </script>  </main> <footer class="site-footer"> <div class="shell footer-row"> <p>&copy; 2026 Terapixel Games</p> <div class="footer-links"> <a href="/privacy-policy">Privacy Policy</a> <a href="/support">Support</a> <a href="/contact">Contact</a> </div> </div> </footer> </body></html>
