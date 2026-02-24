@@ -9,6 +9,157 @@ permissions:
   issues: write
 
 jobs:
-  run:
-    uses: Terapixel-Games/studio-orchestration/.github/workflows/orchestration-handoff.yml@main
-    secrets: inherit
+  handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process handoff commands
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const comment = context.payload.comment;
+            if (!issue || !comment) {
+              core.info('No issue_comment payload found.');
+              return;
+            }
+
+            const actor = comment.user?.login || '';
+            if (actor.endsWith('[bot]')) {
+              core.info('Ignoring bot comment.');
+              return;
+            }
+
+            const association = comment.author_association;
+            const trustedAssociations = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+
+            const raw = (comment.body || '').trim();
+            if (!raw.startsWith('/')) {
+              core.info('No command found.');
+              return;
+            }
+
+            if (!trustedAssociations.includes(association)) {
+              core.info(`Ignoring command from ${association}.`);
+              return;
+            }
+
+            const ownerLabels = [
+              'agent:ceo', 'agent:cto', 'agent:cfo', 'agent:cmo', 'agent:product',
+              'agent:pm', 'agent:devops', 'agent:seniordev', 'agent:juniordev'
+            ];
+            const statusLabels = [
+              'status:triage', 'status:ready', 'status:in-progress',
+              'status:needs-review', 'status:blocked', 'status:done'
+            ];
+
+            const handoffOwners = {
+              ceo: 'agent:ceo',
+              cto: 'agent:cto',
+              cfo: 'agent:cfo',
+              cmo: 'agent:cmo',
+              product: 'agent:product',
+              pm: 'agent:pm',
+              devops: 'agent:devops',
+              seniordev: 'agent:seniordev',
+              juniordev: 'agent:juniordev',
+              junior: 'agent:juniordev'
+            };
+
+            const setExclusive = (labels, family, desired) => {
+              const filtered = labels.filter((name) => !family.includes(name));
+              if (desired) {
+                filtered.push(desired);
+              }
+              return [...new Set(filtered)];
+            };
+
+            const currentLabels = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
+            let nextLabels = [...new Set(currentLabels)];
+
+            let actionSummary = null;
+            let targetOwner = null;
+            let targetStatus = null;
+            let blockReason = null;
+
+            const handoffMatch = raw.match(/^\/handoff\s+([a-z]+)/i);
+            if (handoffMatch) {
+              const role = handoffMatch[1].toLowerCase();
+              targetOwner = handoffOwners[role] || null;
+              if (!targetOwner) {
+                core.info(`Unknown handoff role: ${role}`);
+                return;
+              }
+              targetStatus = 'status:ready';
+              actionSummary = `handoff to \`${targetOwner}\``;
+            }
+
+            if (/^\/ready\b/i.test(raw)) {
+              targetStatus = 'status:ready';
+              actionSummary = 'marked as ready';
+            }
+
+            if (/^\/start\b/i.test(raw)) {
+              targetStatus = 'status:in-progress';
+              actionSummary = 'marked as in progress';
+            }
+
+            if (/^\/review\b/i.test(raw)) {
+              targetStatus = 'status:needs-review';
+              actionSummary = 'moved to review';
+            }
+
+            if (/^\/done\b/i.test(raw)) {
+              targetStatus = 'status:done';
+              actionSummary = 'marked as done';
+            }
+
+            const blockMatch = raw.match(/^\/block\s+(.+)/i);
+            if (blockMatch) {
+              targetStatus = 'status:blocked';
+              blockReason = blockMatch[1].trim();
+              actionSummary = 'marked as blocked';
+            }
+
+            if (!actionSummary) {
+              core.info('No supported orchestration command found.');
+              return;
+            }
+
+            if (targetOwner) {
+              nextLabels = setExclusive(nextLabels, ownerLabels, targetOwner);
+            }
+            if (targetStatus) {
+              nextLabels = setExclusive(nextLabels, statusLabels, targetStatus);
+            }
+
+            const currentSorted = [...new Set(currentLabels)].sort();
+            const nextSorted = [...new Set(nextLabels)].sort();
+            const labelsChanged = JSON.stringify(currentSorted) !== JSON.stringify(nextSorted);
+
+            if (labelsChanged) {
+              await github.rest.issues.setLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: nextSorted
+              });
+            }
+
+            const marker = '<!-- orchestration:handoff -->';
+            const reasonLine = blockReason ? `\n- Block reason: ${blockReason}` : '';
+            const body = `${marker}
+
+### Orchestration Handoff
+- Command: \`${raw}\`
+- Actor: @${actor}
+- Result: ${actionSummary}
+- Owner: ${targetOwner ? `\`${targetOwner}\`` : 'unchanged'}
+- Status: ${targetStatus ? `\`${targetStatus}\`` : 'unchanged'}${reasonLine}
+`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body
+            });

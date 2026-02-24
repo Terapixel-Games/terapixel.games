@@ -9,6 +9,203 @@ permissions:
   issues: write
 
 jobs:
-  run:
-    uses: Terapixel-Games/studio-orchestration/.github/workflows/orchestration-issue-pickup.yml@main
-    secrets: inherit
+  pickup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Route owner, normalize labels, and post pickup note
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            if (!issue) {
+              core.info('No issue payload found.');
+              return;
+            }
+
+            const ownerLabels = [
+              'agent:ceo', 'agent:cto', 'agent:cfo', 'agent:cmo', 'agent:product',
+              'agent:pm', 'agent:devops', 'agent:seniordev', 'agent:juniordev'
+            ];
+            const statusLabels = [
+              'status:triage', 'status:ready', 'status:in-progress',
+              'status:needs-review', 'status:blocked', 'status:done'
+            ];
+            const severityLabels = ['sev:P0', 'sev:P1', 'sev:P2'];
+
+            const ownerRouting = [
+              { label: 'incident', owner: 'agent:devops' },
+              { label: 'prod-failure', owner: 'agent:devops' },
+              { label: 'staging-failure', owner: 'agent:devops' },
+              { label: 'deploy', owner: 'agent:devops' },
+              { label: 'ci', owner: 'agent:devops' },
+              { label: 'revenue-anomaly', owner: 'agent:cfo' },
+              { label: 'tech-debt', owner: 'agent:cto' },
+              { label: 'feature', owner: 'agent:product' },
+              { label: 'bug', owner: 'agent:seniordev' },
+              { label: 'task', owner: 'agent:pm' }
+            ];
+
+            const watcherMap = {
+              'agent:devops': ['agent:cto', 'agent:pm'],
+              'agent:seniordev': ['agent:pm', 'agent:product'],
+              'agent:product': ['agent:pm', 'agent:cto'],
+              'agent:pm': ['agent:product'],
+              'agent:cto': ['agent:seniordev', 'agent:pm'],
+              'agent:cfo': ['agent:ceo', 'agent:cto', 'agent:cmo']
+            };
+
+            const ownerDisplay = {
+              'agent:ceo': 'CEO',
+              'agent:cto': 'CTO',
+              'agent:cfo': 'CFO',
+              'agent:cmo': 'CMO',
+              'agent:product': 'Product',
+              'agent:pm': 'PM',
+              'agent:devops': 'DevOps',
+              'agent:seniordev': 'SeniorDev',
+              'agent:juniordev': 'JuniorDev'
+            };
+
+            const issueLabels = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
+            let nextLabels = [...new Set(issueLabels)];
+
+            const pickOwnerFromRouting = (labels) => {
+              if (labels.includes('incident')) {
+                return 'agent:devops';
+              }
+              if (labels.includes('feature') && labels.includes('bug')) {
+                return 'agent:pm';
+              }
+              for (const route of ownerRouting) {
+                if (labels.includes(route.label)) {
+                  return route.owner;
+                }
+              }
+              return null;
+            };
+
+            const setExclusiveLabel = (labels, family, desired) => {
+              const filtered = labels.filter((name) => !family.includes(name));
+              if (desired) {
+                filtered.push(desired);
+              }
+              return [...new Set(filtered)];
+            };
+
+            const existingOwners = nextLabels.filter((name) => ownerLabels.includes(name));
+            let owner = existingOwners.length === 1 ? existingOwners[0] : null;
+            if (!owner) {
+              owner = pickOwnerFromRouting(nextLabels);
+            }
+            if (owner) {
+              nextLabels = setExclusiveLabel(nextLabels, ownerLabels, owner);
+            } else if (existingOwners.length > 1) {
+              nextLabels = setExclusiveLabel(nextLabels, ownerLabels, existingOwners[0]);
+              owner = existingOwners[0];
+            }
+
+            const existingStatuses = nextLabels.filter((name) => statusLabels.includes(name));
+            const status = existingStatuses[0] || 'status:triage';
+            nextLabels = setExclusiveLabel(nextLabels, statusLabels, status);
+
+            const existingSeverities = nextLabels.filter((name) => severityLabels.includes(name));
+            const severity = existingSeverities[0] || 'sev:P2';
+            nextLabels = setExclusiveLabel(nextLabels, severityLabels, severity);
+
+            const normalizedCurrent = [...new Set(issueLabels)].sort();
+            const normalizedNext = [...new Set(nextLabels)].sort();
+            const labelsChanged = JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedNext);
+
+            if (labelsChanged) {
+              await github.rest.issues.setLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: normalizedNext
+              });
+              core.info(`Normalized labels for issue #${issue.number}`);
+            }
+
+            let assignees = [];
+            if (owner) {
+              try {
+                const configPath = '.github/orchestration-assignees.json';
+                const response = await github.rest.repos.getContent({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  path: configPath,
+                  ref: context.payload.repository.default_branch
+                });
+
+                if (!Array.isArray(response.data) && response.data.content) {
+                  const decoded = Buffer.from(response.data.content, 'base64').toString('utf8');
+                  const assignmentConfig = JSON.parse(decoded);
+                  const mapped = assignmentConfig[owner];
+                  if (Array.isArray(mapped)) {
+                    assignees = mapped.map((x) => String(x).trim()).filter(Boolean);
+                  }
+                }
+              } catch (error) {
+                if (error.status !== 404) {
+                  core.warning(`Unable to read assignment config: ${error.message}`);
+                }
+              }
+            }
+
+            if (assignees.length > 0) {
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  assignees
+                });
+              } catch (error) {
+                core.warning(`Assignment update failed: ${error.message}`);
+              }
+            }
+
+            const marker = '<!-- orchestration:pickup -->';
+            const watchers = owner ? (watcherMap[owner] || []) : [];
+
+            const body = `${marker}
+
+### Orchestration Pickup
+- Owner: ${owner ? `\`${owner}\` (${ownerDisplay[owner] || owner})` : '`unassigned` (needs triage)'}
+- Severity: \`${severity}\`
+- Status: \`${status}\`
+- Watchers: ${watchers.length > 0 ? watchers.map((w) => `\`${w}\``).join(', ') : 'none'}
+- Assignees: ${assignees.length > 0 ? assignees.map((a) => `@${a}`).join(', ') : 'none configured'}
+
+### Next Step
+- PM validates acceptance criteria and execution order.
+- Use handoff commands in comments:
+  - \`/handoff pm|seniordev|juniordev|devops|product|cto|cfo|cmo|ceo\`
+  - \`/ready\`, \`/start\`, \`/review\`, \`/done\`, \`/block <reason>\`
+`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              per_page: 100
+            });
+
+            const existing = comments.find((c) => (c.body || '').includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+              core.info(`Updated pickup comment on #${issue.number}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body
+              });
+              core.info(`Created pickup comment on #${issue.number}`);
+            }
