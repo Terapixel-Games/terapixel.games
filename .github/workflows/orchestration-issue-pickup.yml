@@ -8,6 +8,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: orchestration-issue-pickup-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
 jobs:
   pickup:
     runs-on: ubuntu-latest
