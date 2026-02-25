@@ -29,7 +29,9 @@ api_request() {
   local path="$2"
   local body="${3:-}"
   local url="${API_BASE}${path}"
+  local raw_response
   local response
+  local http_code
 
   if bool_true "${DRY_RUN:-false}" && [[ "$method" != "GET" ]]; then
     echo "[dry-run] ${method} ${url}" >&2
@@ -41,15 +43,32 @@ api_request() {
   fi
 
   if [[ -n "$body" ]]; then
-    response="$(curl -fsS -X "$method" \
+    raw_response="$(curl -sS -X "$method" \
       -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
       -H "Content-Type: application/json" \
       --data "$body" \
-      "$url")"
+      "$url" \
+      -w $'\n%{http_code}')"
   else
-    response="$(curl -fsS -X "$method" \
+    raw_response="$(curl -sS -X "$method" \
       -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-      "$url")"
+      "$url" \
+      -w $'\n%{http_code}')"
+  fi
+
+  http_code="$(tail -n 1 <<<"$raw_response" | tr -d '\r')"
+  response="$(sed '$d' <<<"$raw_response")"
+
+  if [[ "$http_code" -lt 200 || "$http_code" -gt 299 ]]; then
+    echo "Cloudflare API request failed: ${method} ${path} (HTTP ${http_code})" >&2
+    if [[ -n "$response" ]]; then
+      if jq -e . >/dev/null 2>&1 <<<"$response"; then
+        echo "$response" | jq . >&2
+      else
+        echo "$response" >&2
+      fi
+    fi
+    exit 1
   fi
 
   if [[ "$(jq -r '.success // false' <<<"$response")" != "true" ]]; then
