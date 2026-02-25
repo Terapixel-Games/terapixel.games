@@ -1,8 +1,6 @@
-name: Deploy Production
+name: Deploy Production (Legacy GH Pages)
 
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -17,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Legacy workflow notice
+        run: |
+          echo "This workflow is legacy and only runs manually."
+          echo "Production traffic is now routed to Google Cloud origin via Cloudflare."
+
       - name: Checkout
         uses: actions/checkout@v4
         with:

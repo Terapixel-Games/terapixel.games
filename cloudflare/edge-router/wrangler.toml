@@ -1,0 +1,8 @@
+name = "terapixel-edge-router"
+main = "src/index.js"
+compatibility_date = "2026-02-25"
+workers_dev = false
+
+routes = [
+  { pattern = "www.terapixel.games/*", zone_name = "terapixel.games" }
+]
