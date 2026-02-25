@@ -25,6 +25,14 @@
   var saveSnapshots = new Map();
   var state = readGlobalIdentity();
 
+  function hasServerSessionConfig() {
+    return !!AUTH_CONFIG.sessionUrl;
+  }
+
+  function trustClientIdentityStorage() {
+    return !hasServerSessionConfig();
+  }
+
   function nowSeconds() {
     return Math.floor(Date.now() / 1000);
   }
@@ -91,7 +99,6 @@
       authenticated: normalized.authenticated,
       terapixel_user_id: normalized.terapixel_user_id,
       terapixel_display_name: normalized.terapixel_display_name,
-      terapixel_email: normalized.terapixel_email,
       updated_at: nowSeconds(),
       source: String(source || "unknown"),
     };
@@ -114,7 +121,6 @@
     return normalizeIdentity({
       terapixel_user_id: save.terapixel_user_id,
       terapixel_display_name: save.terapixel_display_name,
-      terapixel_email: save.terapixel_email,
     });
   }
 
@@ -123,7 +129,7 @@
     var normalized = normalizeIdentity(identity);
     save.terapixel_user_id = normalized.terapixel_user_id;
     save.terapixel_display_name = normalized.terapixel_display_name;
-    save.terapixel_email = normalized.terapixel_email;
+    save.terapixel_email = "";
     window.localStorage.setItem(saveKey, JSON.stringify(save));
     saveSnapshots.set(saveKey, window.localStorage.getItem(saveKey) || "");
   }
@@ -184,6 +190,11 @@
   }
 
   function reconcileIdentity(reason) {
+    if (!trustClientIdentityStorage()) {
+      setState(emptyIdentity(), reason || "reconcile:server-session-only");
+      return;
+    }
+
     var globalIdentity = readGlobalIdentity();
     if (hasIdentity(globalIdentity)) {
       syncSavesFromIdentity(globalIdentity);
@@ -213,6 +224,10 @@
   }
 
   function handleSaveMutation(saveKey, reason) {
+    if (!trustClientIdentityStorage()) {
+      return;
+    }
+
     var saveIdentity = readIdentityFromSave(saveKey);
     if (hasIdentity(saveIdentity)) {
       setAuthenticatedIdentity(saveIdentity, reason || "save:login");
@@ -462,17 +477,23 @@
   window.addEventListener("storage", handleStorageEvent);
   observedSaveKeys.forEach(trackSaveKey);
 
-  var urlState = tryConsumeIdentityFromUrl();
-  reconcileIdentity("boot");
+  tryConsumeIdentityFromUrl();
+  if (trustClientIdentityStorage()) {
+    reconcileIdentity("boot");
+  } else {
+    setState(emptyIdentity(), "boot:server-session-only");
+  }
 
-  if (
-    AUTH_CONFIG.hydrateFromSessionOnLoad &&
-    AUTH_CONFIG.sessionUrl &&
-    (urlState.sawAuthMarker || !hasIdentity(state))
-  ) {
-    hydrateFromSession("boot:session").catch(function () {
-      // Session hydration is optional.
-    });
+  if (AUTH_CONFIG.hydrateFromSessionOnLoad && AUTH_CONFIG.sessionUrl) {
+    hydrateFromSession("boot:session")
+      .then(function (session) {
+        if (!session || !session.ok) {
+          clearIdentity("boot:session-error");
+        }
+      })
+      .catch(function () {
+        clearIdentity("boot:session-error");
+      });
   }
 
   window.setInterval(pollKnownSaves, 1000);
