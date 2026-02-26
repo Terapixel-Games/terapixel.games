@@ -54,7 +54,7 @@ function resolveRoute(pathname) {
     return {
       target: "STAGING_SITE_ORIGIN",
       pathname: "/staging/index.html",
-      noStore: false,
+      noStore: true,
       route: "staging-admin-spa",
     };
   }
@@ -63,7 +63,7 @@ function resolveRoute(pathname) {
     return {
       target: "STAGING_SITE_ORIGIN",
       pathname,
-      noStore: false,
+      noStore: true,
       route: "staging-site",
     };
   }

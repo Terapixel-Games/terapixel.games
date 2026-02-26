@@ -17,6 +17,9 @@ Worker route scope:
 - `/staging/*` -> `EDGE_STAGING_SITE_ORIGIN`
 - everything else -> `EDGE_PROD_SITE_ORIGIN`
 
+Caching policy:
+- `/staging/*`, `/staging/admin*`, and API routes are returned with `Cache-Control: no-store` to avoid stale rehearsal artifacts.
+
 The Worker route is configured in:
 - `cloudflare/edge-router/wrangler.toml`
 
