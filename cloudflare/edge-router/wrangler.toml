@@ -4,6 +4,12 @@ compatibility_date = "2026-02-25"
 workers_dev = false
 
 routes = [
-  { pattern = "terapixel.games/*", zone_name = "terapixel.games" },
-  { pattern = "www.terapixel.games/*", zone_name = "terapixel.games" }
+  { pattern = "terapixel.games/api/*", zone_name = "terapixel.games" },
+  { pattern = "terapixel.games/staging/api/*", zone_name = "terapixel.games" },
+  { pattern = "terapixel.games/admin*", zone_name = "terapixel.games" },
+  { pattern = "terapixel.games/staging/admin*", zone_name = "terapixel.games" },
+  { pattern = "www.terapixel.games/api/*", zone_name = "terapixel.games" },
+  { pattern = "www.terapixel.games/staging/api/*", zone_name = "terapixel.games" },
+  { pattern = "www.terapixel.games/admin*", zone_name = "terapixel.games" },
+  { pattern = "www.terapixel.games/staging/admin*", zone_name = "terapixel.games" }
 ]

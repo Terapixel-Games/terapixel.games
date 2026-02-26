@@ -1,8 +1,14 @@
 # Edge Routing (Cloudflare)
 
-This repo now manages a Cloudflare Worker that routes traffic for both:
+This repo now manages a Cloudflare Worker that routes selected paths for both:
 - `terapixel.games`
 - `www.terapixel.games`
+
+Worker route scope:
+- `/api/*`
+- `/staging/api/*`
+- `/admin*`
+- `/staging/admin*`
 
 ## Routing Table
 
@@ -10,8 +16,8 @@ This repo now manages a Cloudflare Worker that routes traffic for both:
 - `/staging/api/*` -> `EDGE_STAGING_API_ORIGIN`
 - `/admin*` -> `EDGE_PROD_SITE_ORIGIN/index.html` (SPA fallback)
 - `/staging/admin*` -> `EDGE_STAGING_SITE_ORIGIN/staging/index.html` (SPA fallback)
-- `/staging/*` -> `EDGE_STAGING_SITE_ORIGIN`
-- everything else -> `EDGE_PROD_SITE_ORIGIN`
+
+Outside those paths, traffic is served by normal DNS/origin behavior.
 
 The Worker route is configured in:
 - `cloudflare/edge-router/wrangler.toml`
