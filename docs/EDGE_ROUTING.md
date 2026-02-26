@@ -6,6 +6,7 @@ This repo now manages a Cloudflare Worker that routes selected paths for both:
 
 Worker route scope:
 - `/api/*`
+- `/v1/admin*`
 - `/staging/api/*`
 - `/admin*`
 - `/staging/admin*`
@@ -13,8 +14,9 @@ Worker route scope:
 ## Routing Table
 
 - `/api/*` -> `EDGE_PROD_API_ORIGIN`
+- `/v1/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN`
 - `/staging/api/*` -> `EDGE_STAGING_API_ORIGIN`
-- `/admin*` -> `EDGE_PROD_SITE_ORIGIN/index.html` (SPA fallback)
+- `/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin UI/API)
 - `/staging/admin*` -> `EDGE_STAGING_SITE_ORIGIN/staging/index.html` (SPA fallback)
 
 Outside those paths, traffic is served by normal DNS/origin behavior.
@@ -36,6 +38,7 @@ Repository variables:
 - `EDGE_STAGING_SITE_ORIGIN` (GitHub Pages origin that contains `/staging/`, e.g. `https://terapixelgames.github.io/terapixel.games`)
 - `EDGE_PROD_API_ORIGIN` (prod terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
 - `EDGE_STAGING_API_ORIGIN` (staging terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
+- `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin endpoint, e.g. `https://terapixel-control-plane.onrender.com`)
 
 ## Deploy
 
@@ -48,7 +51,8 @@ wrangler deploy --config cloudflare/edge-router/wrangler.toml \
   --var "PROD_SITE_ORIGIN:https://<prod-site-origin>" \
   --var "STAGING_SITE_ORIGIN:https://<gh-pages-origin>" \
   --var "PROD_API_ORIGIN:https://<prod-api-origin>" \
-  --var "STAGING_API_ORIGIN:https://<staging-api-origin>"
+  --var "STAGING_API_ORIGIN:https://<staging-api-origin>" \
+  --var "CONTROL_PLANE_ORIGIN:https://<control-plane-origin>"
 ```
 
 ## Verification
@@ -58,6 +62,7 @@ Check route behavior after deploy:
 curl -I https://www.terapixel.games/
 curl -I https://www.terapixel.games/staging/
 curl -I https://www.terapixel.games/api/health
+curl -I https://www.terapixel.games/v1/admin/me
 curl -I https://www.terapixel.games/staging/api/health
 curl -I https://www.terapixel.games/admin
 curl -I https://www.terapixel.games/_edge/health
@@ -67,4 +72,4 @@ Expected:
 - `/_edge/health` returns JSON from the Worker.
 - `/staging/` serves staging site content from GitHub Pages origin.
 - `/api/*` and `/staging/api/*` are proxied to prod/staging platform endpoints.
-- `/admin*` resolves through the site SPA entrypoint instead of returning origin 404.
+- `/admin*` is proxied to control-plane and protected by Cloudflare Access.

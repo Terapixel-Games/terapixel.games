@@ -37,9 +37,10 @@ jobs:
           EDGE_STAGING_SITE_ORIGIN: ${{ vars.EDGE_STAGING_SITE_ORIGIN }}
           EDGE_PROD_API_ORIGIN: ${{ vars.EDGE_PROD_API_ORIGIN }}
           EDGE_STAGING_API_ORIGIN: ${{ vars.EDGE_STAGING_API_ORIGIN }}
+          EDGE_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_CONTROL_PLANE_ORIGIN }}
         run: |
           set -euo pipefail
-          for var_name in EDGE_PROD_SITE_ORIGIN EDGE_STAGING_SITE_ORIGIN EDGE_PROD_API_ORIGIN EDGE_STAGING_API_ORIGIN; do
+          for var_name in EDGE_PROD_SITE_ORIGIN EDGE_STAGING_SITE_ORIGIN EDGE_PROD_API_ORIGIN EDGE_STAGING_API_ORIGIN EDGE_CONTROL_PLANE_ORIGIN; do
             if [[ -z "${!var_name:-}" ]]; then
               echo "::error::Missing required repository variable: ${var_name}"
               exit 1
@@ -54,6 +55,7 @@ jobs:
           EDGE_STAGING_SITE_ORIGIN: ${{ vars.EDGE_STAGING_SITE_ORIGIN }}
           EDGE_PROD_API_ORIGIN: ${{ vars.EDGE_PROD_API_ORIGIN }}
           EDGE_STAGING_API_ORIGIN: ${{ vars.EDGE_STAGING_API_ORIGIN }}
+          EDGE_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_CONTROL_PLANE_ORIGIN }}
         run: |
           set -euo pipefail
           if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
@@ -66,4 +68,5 @@ jobs:
             --var "PROD_SITE_ORIGIN:${EDGE_PROD_SITE_ORIGIN}" \
             --var "STAGING_SITE_ORIGIN:${EDGE_STAGING_SITE_ORIGIN}" \
             --var "PROD_API_ORIGIN:${EDGE_PROD_API_ORIGIN}" \
-            --var "STAGING_API_ORIGIN:${EDGE_STAGING_API_ORIGIN}"
+            --var "STAGING_API_ORIGIN:${EDGE_STAGING_API_ORIGIN}" \
+            --var "CONTROL_PLANE_ORIGIN:${EDGE_CONTROL_PLANE_ORIGIN}"

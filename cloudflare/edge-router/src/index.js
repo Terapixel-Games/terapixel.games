@@ -23,6 +23,15 @@ function parseOrigin(origin) {
 }
 
 function resolveRoute(pathname) {
+  if (hasPrefix(pathname, "/v1/admin")) {
+    return {
+      target: "CONTROL_PLANE_ORIGIN",
+      pathname,
+      noStore: true,
+      route: "control-plane-admin-api",
+    };
+  }
+
   if (hasPrefix(pathname, "/staging/api")) {
     return {
       target: "STAGING_API_ORIGIN",
@@ -61,10 +70,10 @@ function resolveRoute(pathname) {
 
   if (hasPrefix(pathname, "/admin")) {
     return {
-      target: "PROD_SITE_ORIGIN",
-      pathname: "/index.html",
+      target: "CONTROL_PLANE_ORIGIN",
+      pathname,
       noStore: false,
-      route: "prod-admin-spa",
+      route: "control-plane-admin",
     };
   }
 

@@ -5,10 +5,12 @@ workers_dev = false
 
 routes = [
   { pattern = "terapixel.games/api/*", zone_name = "terapixel.games" },
+  { pattern = "terapixel.games/v1/admin*", zone_name = "terapixel.games" },
   { pattern = "terapixel.games/staging/api/*", zone_name = "terapixel.games" },
   { pattern = "terapixel.games/admin*", zone_name = "terapixel.games" },
   { pattern = "terapixel.games/staging/admin*", zone_name = "terapixel.games" },
   { pattern = "www.terapixel.games/api/*", zone_name = "terapixel.games" },
+  { pattern = "www.terapixel.games/v1/admin*", zone_name = "terapixel.games" },
   { pattern = "www.terapixel.games/staging/api/*", zone_name = "terapixel.games" },
   { pattern = "www.terapixel.games/admin*", zone_name = "terapixel.games" },
   { pattern = "www.terapixel.games/staging/admin*", zone_name = "terapixel.games" }
