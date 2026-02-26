@@ -86,7 +86,7 @@ require_cmd jq
 require_env CLOUDFLARE_API_TOKEN
 require_env CLOUDFLARE_ACCOUNT_ID
 
-ACCESS_APP_DOMAIN="${ACCESS_APP_DOMAIN:-www.terapixel.games/admin}"
+ACCESS_APP_DOMAIN="${ACCESS_APP_DOMAIN:-terapixel.games/admin}"
 ACCESS_APP_NAME="${ACCESS_APP_NAME:-TeraPixel Admin}"
 ACCESS_SESSION_DURATION="${ACCESS_SESSION_DURATION:-12h}"
 ACCESS_POLICY_NAME="${ACCESS_POLICY_NAME:-TeraPixel Admin - Workspace Only}"

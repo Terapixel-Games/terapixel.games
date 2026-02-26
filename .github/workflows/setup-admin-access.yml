@@ -12,7 +12,7 @@ on:
         description: "Access app domain path"
         required: false
         type: string
-        default: "www.terapixel.games/admin"
+        default: "terapixel.games/admin"
       allowed_email_domain:
         description: "Allowed email domain for /admin"
         required: false

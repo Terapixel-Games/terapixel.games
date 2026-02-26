@@ -1,11 +1,15 @@
 # Edge Routing (Cloudflare)
 
-This repo now manages a Cloudflare Worker that routes traffic for `www.terapixel.games` by path.
+This repo now manages a Cloudflare Worker that routes traffic for both:
+- `terapixel.games`
+- `www.terapixel.games`
 
 ## Routing Table
 
 - `/api/*` -> `EDGE_PROD_API_ORIGIN`
 - `/staging/api/*` -> `EDGE_STAGING_API_ORIGIN`
+- `/admin*` -> `EDGE_PROD_SITE_ORIGIN/index.html` (SPA fallback)
+- `/staging/admin*` -> `EDGE_STAGING_SITE_ORIGIN/staging/index.html` (SPA fallback)
 - `/staging/*` -> `EDGE_STAGING_SITE_ORIGIN`
 - everything else -> `EDGE_PROD_SITE_ORIGIN`
 
@@ -49,6 +53,7 @@ curl -I https://www.terapixel.games/
 curl -I https://www.terapixel.games/staging/
 curl -I https://www.terapixel.games/api/health
 curl -I https://www.terapixel.games/staging/api/health
+curl -I https://www.terapixel.games/admin
 curl -I https://www.terapixel.games/_edge/health
 ```
 
@@ -56,3 +61,4 @@ Expected:
 - `/_edge/health` returns JSON from the Worker.
 - `/staging/` serves staging site content from GitHub Pages origin.
 - `/api/*` and `/staging/api/*` are proxied to prod/staging platform endpoints.
+- `/admin*` resolves through the site SPA entrypoint instead of returning origin 404.

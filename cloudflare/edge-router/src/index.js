@@ -41,12 +41,30 @@ function resolveRoute(pathname) {
     };
   }
 
+  if (hasPrefix(pathname, "/staging/admin")) {
+    return {
+      target: "STAGING_SITE_ORIGIN",
+      pathname: "/staging/index.html",
+      noStore: false,
+      route: "staging-admin-spa",
+    };
+  }
+
   if (hasPrefix(pathname, "/staging")) {
     return {
       target: "STAGING_SITE_ORIGIN",
       pathname,
       noStore: false,
       route: "staging-site",
+    };
+  }
+
+  if (hasPrefix(pathname, "/admin")) {
+    return {
+      target: "PROD_SITE_ORIGIN",
+      pathname: "/index.html",
+      noStore: false,
+      route: "prod-admin-spa",
     };
   }
 

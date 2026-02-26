@@ -5,7 +5,7 @@ This repo includes automation to configure `/admin` access with Cloudflare Acces
 ## What it configures
 
 - Finds or creates a Google Workspace identity provider in Cloudflare Zero Trust.
-- Finds or creates a self-hosted Access app for `www.terapixel.games/admin`.
+- Finds or creates a self-hosted Access app for `terapixel.games/admin`.
 - Finds or creates an Access policy that allows only a specified email domain.
 
 Script:
@@ -49,7 +49,7 @@ Example (apply):
 ```bash
 export CLOUDFLARE_API_TOKEN='<token>'
 export CLOUDFLARE_ACCOUNT_ID='945482779cce20ab534c3ea82deb55e4'
-export ACCESS_APP_DOMAIN='www.terapixel.games/admin'
+export ACCESS_APP_DOMAIN='terapixel.games/admin'
 export ACCESS_ALLOWED_EMAIL_DOMAIN='terapixel.games'
 export ACCESS_IDP_TYPE='google-apps'
 export GOOGLE_APPS_DOMAIN='terapixel.games'
@@ -69,7 +69,7 @@ DRY_RUN=true bash scripts/cloudflare/setup-admin-access.sh
 
 Use workflow **Setup Admin Access** and provide:
 
-- `app_domain` (default `www.terapixel.games/admin`)
+- `app_domain` (default `terapixel.games/admin`)
 - `allowed_email_domain` (default `terapixel.games`)
 - `idp_type` (`google-apps` recommended for Workspace)
 - `dry_run` if you want preview mode.
