@@ -1,58 +1,127 @@
-name: Deploy Production (Legacy GH Pages)
+name: Deploy Production
 
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  id-token: write
 
 concurrency:
-  group: "deploy-prod-gh-pages"
+  group: "deploy-prod-cloudrun"
   cancel-in-progress: false
 
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION != '' && vars.GCP_REGION || 'us-central1' }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      CLOUDRUN_PROD_SITE_SERVICE: ${{ vars.CLOUDRUN_PROD_SITE_SERVICE != '' && vars.CLOUDRUN_PROD_SITE_SERVICE || 'terapixel-games-web' }}
+      CLOUDRUN_PROD_SITE_ALLOW_UNAUTHENTICATED: ${{ vars.CLOUDRUN_PROD_SITE_ALLOW_UNAUTHENTICATED != '' && vars.CLOUDRUN_PROD_SITE_ALLOW_UNAUTHENTICATED || 'false' }}
+      CLOUDRUN_PROD_SITE_DISABLE_INVOKER_IAM_CHECK: ${{ vars.CLOUDRUN_PROD_SITE_DISABLE_INVOKER_IAM_CHECK != '' && vars.CLOUDRUN_PROD_SITE_DISABLE_INVOKER_IAM_CHECK || 'true' }}
+      CLOUDRUN_PROD_SITE_DEPLOY_FLAGS_JSON: ${{ vars.CLOUDRUN_PROD_SITE_DEPLOY_FLAGS_JSON }}
+      PUBLIC_TPX_IDENTITY_LOGIN_URL: ${{ vars.PUBLIC_TPX_IDENTITY_LOGIN_URL }}
+      PUBLIC_TPX_IDENTITY_LOGOUT_URL: ${{ vars.PUBLIC_TPX_IDENTITY_LOGOUT_URL }}
+      PUBLIC_TPX_IDENTITY_SESSION_URL: ${{ vars.PUBLIC_TPX_IDENTITY_SESSION_URL }}
+      PUBLIC_TPX_IDENTITY_RETURN_PARAM: ${{ vars.PUBLIC_TPX_IDENTITY_RETURN_PARAM }}
+      PUBLIC_TPX_IDENTITY_EMAIL_PARAM: ${{ vars.PUBLIC_TPX_IDENTITY_EMAIL_PARAM }}
+      PUBLIC_TPX_IDENTITY_LOGOUT_METHOD: ${{ vars.PUBLIC_TPX_IDENTITY_LOGOUT_METHOD }}
+      PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD: ${{ vars.PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD }}
 
     steps:
-      - name: Legacy workflow notice
-        run: |
-          echo "This workflow is legacy and only runs manually."
-          echo "Production traffic is now routed to Google Cloud origin via Cloudflare."
-
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate required configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT CLOUDRUN_PROD_SITE_SERVICE; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing required variable: ${key}"
+              exit 1
+            fi
+          done
+          if [ -n "${CLOUDRUN_PROD_SITE_DEPLOY_FLAGS_JSON:-}" ]; then
+            jq -e 'type == "array"' <<<"${CLOUDRUN_PROD_SITE_DEPLOY_FLAGS_JSON}" >/dev/null
+          fi
+
+      - name: Authenticate to Google Cloud (OIDC)
+        uses: google-github-actions/auth@v2
         with:
-          fetch-depth: 0
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          node-version: 20
-          cache: npm
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Prepare production build env file
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            printf 'PUBLIC_TPX_IDENTITY_LOGIN_URL=%s\n' "${PUBLIC_TPX_IDENTITY_LOGIN_URL:-}"
+            printf 'PUBLIC_TPX_IDENTITY_LOGOUT_URL=%s\n' "${PUBLIC_TPX_IDENTITY_LOGOUT_URL:-}"
+            printf 'PUBLIC_TPX_IDENTITY_SESSION_URL=%s\n' "${PUBLIC_TPX_IDENTITY_SESSION_URL:-}"
+            printf 'PUBLIC_TPX_IDENTITY_RETURN_PARAM=%s\n' "${PUBLIC_TPX_IDENTITY_RETURN_PARAM:-}"
+            printf 'PUBLIC_TPX_IDENTITY_EMAIL_PARAM=%s\n' "${PUBLIC_TPX_IDENTITY_EMAIL_PARAM:-}"
+            printf 'PUBLIC_TPX_IDENTITY_LOGOUT_METHOD=%s\n' "${PUBLIC_TPX_IDENTITY_LOGOUT_METHOD:-}"
+            printf 'PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD=%s\n' "${PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD:-}"
+          } > .env.production
 
-      - name: Build production site
-        env:
-          PUBLIC_TPX_IDENTITY_LOGIN_URL: ${{ vars.PUBLIC_TPX_IDENTITY_LOGIN_URL }}
-          PUBLIC_TPX_IDENTITY_LOGOUT_URL: ${{ vars.PUBLIC_TPX_IDENTITY_LOGOUT_URL }}
-          PUBLIC_TPX_IDENTITY_SESSION_URL: ${{ vars.PUBLIC_TPX_IDENTITY_SESSION_URL }}
-          PUBLIC_TPX_IDENTITY_RETURN_PARAM: ${{ vars.PUBLIC_TPX_IDENTITY_RETURN_PARAM }}
-          PUBLIC_TPX_IDENTITY_EMAIL_PARAM: ${{ vars.PUBLIC_TPX_IDENTITY_EMAIL_PARAM }}
-          PUBLIC_TPX_IDENTITY_LOGOUT_METHOD: ${{ vars.PUBLIC_TPX_IDENTITY_LOGOUT_METHOD }}
-          PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD: ${{ vars.PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD }}
-        run: npm run build
+      - name: Deploy production static site to Cloud Run
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Deploy production to gh-pages root
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
-          folder: dist
-          clean: true
-          clean-exclude: |
-            staging
-          single-commit: false
-          commit-message: "deploy: prod from ${{ github.ref_name }} (${{ github.sha }})"
+          allow_unauth="$(echo "${CLOUDRUN_PROD_SITE_ALLOW_UNAUTHENTICATED}" | tr '[:upper:]' '[:lower:]')"
+          deploy_args=(
+            "${CLOUDRUN_PROD_SITE_SERVICE}"
+            "--project=${GCP_PROJECT_ID}"
+            "--region=${GCP_REGION}"
+            "--platform=managed"
+            "--source=."
+            "--quiet"
+          )
+
+          if [[ "${allow_unauth}" == "true" || "${allow_unauth}" == "1" || "${allow_unauth}" == "yes" ]]; then
+            deploy_args+=("--allow-unauthenticated")
+          else
+            deploy_args+=("--no-allow-unauthenticated")
+          fi
+
+          invoker_check="$(echo "${CLOUDRUN_PROD_SITE_DISABLE_INVOKER_IAM_CHECK}" | tr '[:upper:]' '[:lower:]')"
+          if [[ "${invoker_check}" == "true" || "${invoker_check}" == "1" || "${invoker_check}" == "yes" ]]; then
+            deploy_args+=("--no-invoker-iam-check")
+          else
+            deploy_args+=("--invoker-iam-check")
+          fi
+
+          if [ -n "${CLOUDRUN_PROD_SITE_DEPLOY_FLAGS_JSON:-}" ]; then
+            mapfile -t extra_flags < <(jq -r '.[]' <<<"${CLOUDRUN_PROD_SITE_DEPLOY_FLAGS_JSON}")
+            if [ "${#extra_flags[@]}" -gt 0 ]; then
+              deploy_args+=("${extra_flags[@]}")
+            fi
+          fi
+
+          gcloud run deploy "${deploy_args[@]}"
+
+          service_url="$(gcloud run services describe "${CLOUDRUN_PROD_SITE_SERVICE}" \
+            --project "${GCP_PROJECT_ID}" \
+            --region "${GCP_REGION}" \
+            --format='value(status.url)')"
+
+          echo "service_url=${service_url}" >> "${GITHUB_OUTPUT}"
+          echo "### Cloud Run Production Site" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Service: \`${CLOUDRUN_PROD_SITE_SERVICE}\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- URL: ${service_url}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Remember to keep \`EDGE_PROD_SITE_ORIGIN\` set to this URL before deploying edge router." >> "${GITHUB_STEP_SUMMARY}"

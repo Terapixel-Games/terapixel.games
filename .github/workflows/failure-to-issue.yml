@@ -2,7 +2,7 @@ name: Deploy Failure To Issue
 
 on:
   workflow_run:
-    workflows: ["Deploy Staging", "Deploy Production"]
+    workflows: ["Deploy Staging", "Deploy Production", "Deploy Production (Legacy GH Pages)"]
     types: [completed]
 
 permissions:

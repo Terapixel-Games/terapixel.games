@@ -5,11 +5,7 @@ This repo now manages a Cloudflare Worker that routes selected paths for both:
 - `www.terapixel.games`
 
 Worker route scope:
-- `/api/*`
-- `/v1/admin*`
-- `/staging/api/*`
-- `/admin*`
-- `/staging/admin*`
+- `/*`
 
 ## Routing Table
 
@@ -18,8 +14,8 @@ Worker route scope:
 - `/staging/api/*` -> `EDGE_STAGING_API_ORIGIN`
 - `/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin UI/API)
 - `/staging/admin*` -> `EDGE_STAGING_SITE_ORIGIN/staging/index.html` (SPA fallback)
-
-Outside those paths, traffic is served by normal DNS/origin behavior.
+- `/staging/*` -> `EDGE_STAGING_SITE_ORIGIN`
+- everything else -> `EDGE_PROD_SITE_ORIGIN`
 
 The Worker route is configured in:
 - `cloudflare/edge-router/wrangler.toml`
@@ -35,10 +31,10 @@ Repository secrets:
 
 Repository variables:
 - `EDGE_PROD_SITE_ORIGIN` (Google Cloud prod site origin, e.g. `https://terapixel-games-web-xxxxx-uc.a.run.app`)
-- `EDGE_STAGING_SITE_ORIGIN` (GitHub Pages origin that contains `/staging/`, e.g. `https://terapixelgames.github.io/terapixel.games`)
+- `EDGE_STAGING_SITE_ORIGIN` (GitHub Pages origin that contains `/staging/`, e.g. `https://terapixel-games.github.io/terapixel.games`)
 - `EDGE_PROD_API_ORIGIN` (prod terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
 - `EDGE_STAGING_API_ORIGIN` (staging terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
-- `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin endpoint, e.g. `https://terapixel-control-plane.onrender.com`)
+- `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
 
 ## Deploy
 
