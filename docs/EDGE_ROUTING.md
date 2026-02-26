@@ -12,8 +12,9 @@ Worker route scope:
 - `/api/*` -> `EDGE_PROD_API_ORIGIN`
 - `/v1/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN`
 - `/staging/api/*` -> `EDGE_STAGING_API_ORIGIN`
-- `/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin UI/API)
-- `/staging/admin*` -> `EDGE_STAGING_SITE_ORIGIN/staging/index.html` (SPA fallback)
+- `/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN` (production control-plane admin UI/API)
+- `/staging/admin*` -> `EDGE_STAGING_CONTROL_PLANE_ORIGIN` (staging control-plane admin UI/API)
+- `/staging/v1/admin*` -> `EDGE_STAGING_CONTROL_PLANE_ORIGIN`
 - `/staging/*` -> `EDGE_STAGING_SITE_ORIGIN`
 - everything else -> `EDGE_PROD_SITE_ORIGIN`
 
@@ -37,7 +38,8 @@ Repository variables:
 - `EDGE_STAGING_SITE_ORIGIN` (GitHub Pages origin that contains `/staging/`, e.g. `https://terapixel-games.github.io/terapixel.games`)
 - `EDGE_PROD_API_ORIGIN` (prod terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
 - `EDGE_STAGING_API_ORIGIN` (staging terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
-- `EDGE_CONTROL_PLANE_ORIGIN` (control-plane admin endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
+- `EDGE_CONTROL_PLANE_ORIGIN` (production control-plane admin endpoint)
+- `EDGE_STAGING_CONTROL_PLANE_ORIGIN` (staging control-plane admin endpoint)
 
 ## Deploy
 
@@ -51,7 +53,8 @@ wrangler deploy --config cloudflare/edge-router/wrangler.toml \
   --var "STAGING_SITE_ORIGIN:https://<gh-pages-origin>" \
   --var "PROD_API_ORIGIN:https://<prod-api-origin>" \
   --var "STAGING_API_ORIGIN:https://<staging-api-origin>" \
-  --var "CONTROL_PLANE_ORIGIN:https://<control-plane-origin>"
+  --var "CONTROL_PLANE_ORIGIN:https://<prod-control-plane-origin>" \
+  --var "STAGING_CONTROL_PLANE_ORIGIN:https://<staging-control-plane-origin>"
 ```
 
 ## Verification
@@ -71,4 +74,5 @@ Expected:
 - `/_edge/health` returns JSON from the Worker.
 - `/staging/` serves staging site content from GitHub Pages origin.
 - `/api/*` and `/staging/api/*` are proxied to prod/staging platform endpoints.
-- `/admin*` is proxied to control-plane and protected by Cloudflare Access.
+- `/admin*` is proxied to production control-plane and protected by Cloudflare Access.
+- `/staging/admin*` is proxied to staging control-plane.

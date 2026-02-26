@@ -23,6 +23,15 @@ function parseOrigin(origin) {
 }
 
 function resolveRoute(pathname) {
+  if (hasPrefix(pathname, "/staging/v1/admin")) {
+    return {
+      target: "STAGING_CONTROL_PLANE_ORIGIN",
+      pathname: stripPrefix(pathname, "/staging"),
+      noStore: true,
+      route: "staging-control-plane-admin-api",
+    };
+  }
+
   if (hasPrefix(pathname, "/v1/admin")) {
     return {
       target: "CONTROL_PLANE_ORIGIN",
@@ -52,10 +61,10 @@ function resolveRoute(pathname) {
 
   if (hasPrefix(pathname, "/staging/admin")) {
     return {
-      target: "STAGING_SITE_ORIGIN",
-      pathname: "/staging/index.html",
+      target: "STAGING_CONTROL_PLANE_ORIGIN",
+      pathname: stripPrefix(pathname, "/staging"),
       noStore: true,
-      route: "staging-admin-spa",
+      route: "staging-control-plane-admin",
     };
   }
 
