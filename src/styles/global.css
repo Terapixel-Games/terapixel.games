@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Staging cache-bust marker: keep to force fresh hashed asset URLs when needed. */
 :root {
   color-scheme: dark;
   --bg: #070a12;
