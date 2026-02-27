@@ -31,6 +31,31 @@ function shouldAppendSlash(pathname) {
   return !pathname.split("/").pop().includes(".");
 }
 
+function resolveTypoRedirect(pathname) {
+  const typoAliases = [
+    {
+      from: "/play/speedsolitair",
+      to: "/play/speedsolitaire",
+    },
+    {
+      from: "/staging/play/speedsolitair",
+      to: "/staging/play/speedsolitaire",
+    },
+  ];
+
+  for (const alias of typoAliases) {
+    if (!hasPrefix(pathname, alias.from)) {
+      continue;
+    }
+
+    const suffix = stripPrefix(pathname, alias.from);
+    const mappedSuffix = suffix === "/" ? (pathname.endsWith("/") ? "/" : "") : suffix;
+    return `${alias.to}${mappedSuffix}`;
+  }
+
+  return "";
+}
+
 function resolveNakamaRoute(pathname) {
   const routes = [
     {
@@ -232,6 +257,13 @@ export default {
         ok: true,
         service: "terapixel-edge-router",
       });
+    }
+
+    const typoRedirectPath = resolveTypoRedirect(requestUrl.pathname);
+    if (typoRedirectPath) {
+      const redirectUrl = new URL(requestUrl.toString());
+      redirectUrl.pathname = typoRedirectPath;
+      return Response.redirect(redirectUrl.toString(), 301);
     }
 
     const route = resolveRoute(requestUrl.pathname);

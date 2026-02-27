@@ -72,8 +72,9 @@
         "answer": "No. You can launch the game from the web using the play links on the game page."
       }
     ],
-    "fullScreenUrl": "https://terapixel-games.github.io/wormhole_raiders/",
-    "embedUrl": "https://terapixel-games.github.io/wormhole_raiders/"
+    "fullScreenUrl": null,
+    "embedUrl": null,
+    "isComingSoon": true
   },
   {
     "title": "Color Crunch",
@@ -122,8 +123,9 @@
         "answer": "Block Forge is built for modern browsers and is accessible across common device types."
       }
     ],
-    "fullScreenUrl": "https://terapixel-games.github.io/block_forge/",
-    "embedUrl": "https://terapixel-games.github.io/block_forge/"
+    "fullScreenUrl": null,
+    "embedUrl": null,
+    "isComingSoon": true
   },
   {
     "title": "SumSlide",
@@ -222,7 +224,7 @@
         "answer": "Yes. Short rounds make it useful for regular score and time improvement sessions."
       }
     ],
-    "fullScreenUrl": null,
-    "embedUrl": null
+    "fullScreenUrl": "/play/speedsolitaire/",
+    "embedUrl": "/play/speedsolitaire/"
   }
 ]
