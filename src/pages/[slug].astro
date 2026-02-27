@@ -12,8 +12,18 @@ export function getStaticPaths() {
 }
 
 const { game, allGames } = Astro.props as { game: Game; allGames: Game[] };
-const showEmbed = Boolean(game.embedUrl);
-const showFullScreen = Boolean(game.fullScreenUrl);
+const isStagingPath = Astro.url.pathname.startsWith('/staging/');
+const mapPlayableUrl = (value: string | null): string | null => {
+  if (!value) return null;
+  if (isStagingPath && value.startsWith('/play/')) {
+    return `/staging${value}`;
+  }
+  return value;
+};
+const embedUrl = mapPlayableUrl(game.embedUrl);
+const fullScreenUrl = mapPlayableUrl(game.fullScreenUrl);
+const showEmbed = Boolean(embedUrl);
+const showFullScreen = Boolean(fullScreenUrl);
 const isPortraitEmbed = game.embedOrientation === 'portrait';
 
 const fallbackIntro = `${game.title} is a browser game from Terapixel Games with quick sessions and accessible gameplay.`;
@@ -84,7 +94,7 @@ const faqJsonLd =
           <div class="player-wrap">
             <div class:list={['player-frame', isPortraitEmbed && 'player-frame-portrait']}>
               <iframe
-                src={game.embedUrl as string}
+                src={embedUrl as string}
                 title={`${game.title} game`}
                 loading="lazy"
                 allow="fullscreen"
@@ -103,7 +113,7 @@ const faqJsonLd =
       <div class="detail-actions">
         {
           showFullScreen ? (
-            <a href={game.fullScreenUrl as string} target="_blank" rel="noreferrer noopener" class="btn btn-primary">
+            <a href={fullScreenUrl as string} target="_blank" rel="noreferrer noopener" class="btn btn-primary">
               Full Screen
             </a>
           ) : (
