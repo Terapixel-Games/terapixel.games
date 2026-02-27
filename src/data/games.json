@@ -225,6 +225,7 @@
       }
     ],
     "fullScreenUrl": "/play/speedsolitaire/",
-    "embedUrl": "/play/speedsolitaire/"
+    "embedUrl": "/play/speedsolitaire/",
+    "embedOrientation": "portrait"
   }
 ]

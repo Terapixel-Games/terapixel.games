@@ -14,6 +14,7 @@ export function getStaticPaths() {
 const { game, allGames } = Astro.props as { game: Game; allGames: Game[] };
 const showEmbed = Boolean(game.embedUrl);
 const showFullScreen = Boolean(game.fullScreenUrl);
+const isPortraitEmbed = game.embedOrientation === 'portrait';
 
 const fallbackIntro = `${game.title} is a browser game from Terapixel Games with quick sessions and accessible gameplay.`;
 const fallbackDetails =
@@ -81,7 +82,7 @@ const faqJsonLd =
       {
         showEmbed ? (
           <div class="player-wrap">
-            <div class="player-frame">
+            <div class:list={['player-frame', isPortraitEmbed && 'player-frame-portrait']}>
               <iframe
                 src={game.embedUrl as string}
                 title={`${game.title} game`}
