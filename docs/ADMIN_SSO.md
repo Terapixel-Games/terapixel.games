@@ -1,11 +1,11 @@
-# Admin SSO (Cloudflare Access + Google Workspace)
+# Access SSO (Cloudflare Access + Google Workspace)
 
-This repo includes automation to configure `/admin` access with Cloudflare Access.
+This repo includes automation to configure protected paths with Cloudflare Access.
 
 ## What it configures
 
 - Finds or creates a Google Workspace identity provider in Cloudflare Zero Trust.
-- Finds or creates a self-hosted Access app for `terapixel.games/admin`.
+- Finds or creates self-hosted Access apps for protected paths.
 - Finds or creates an Access policy that allows only a specified email domain.
 
 Script:
@@ -13,6 +13,7 @@ Script:
 
 Workflow:
 - `.github/workflows/setup-admin-access.yml`
+- `.github/workflows/setup-zero-trust-access.yml`
 
 ## Required token scopes
 
@@ -42,6 +43,15 @@ Optional variable:
 
 - `GOOGLE_APPS_DOMAIN` (defaults to `terapixel.games`)
 
+## Protected path defaults
+
+`Setup Zero Trust Access` configures:
+
+- `terapixel.games/admin`
+- `terapixel.games/staging`
+- `terapixel.games/nakama/lumarush/console`
+- `terapixel.games/nakama/color-crunch/console`
+
 ## Run from CLI
 
 Example (apply):
@@ -49,7 +59,7 @@ Example (apply):
 ```bash
 export CLOUDFLARE_API_TOKEN='<token>'
 export CLOUDFLARE_ACCOUNT_ID='945482779cce20ab534c3ea82deb55e4'
-export ACCESS_APP_DOMAIN='terapixel.games/admin'
+export ACCESS_APP_DOMAIN='terapixel.games/staging'
 export ACCESS_ALLOWED_EMAIL_DOMAIN='terapixel.games'
 export ACCESS_IDP_TYPE='google-apps'
 export GOOGLE_APPS_DOMAIN='terapixel.games'
@@ -73,3 +83,5 @@ Use workflow **Setup Admin Access** and provide:
 - `allowed_email_domain` (default `terapixel.games`)
 - `idp_type` (`google-apps` recommended for Workspace)
 - `dry_run` if you want preview mode.
+
+Use workflow **Setup Zero Trust Access** to configure all standard protected paths in one run.

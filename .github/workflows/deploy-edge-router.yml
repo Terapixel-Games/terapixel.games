@@ -39,12 +39,20 @@ jobs:
           EDGE_STAGING_API_ORIGIN: ${{ vars.EDGE_STAGING_API_ORIGIN }}
           EDGE_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_CONTROL_PLANE_ORIGIN }}
           EDGE_STAGING_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_STAGING_CONTROL_PLANE_ORIGIN }}
+          EDGE_NAKAMA_LUMARUSH_ORIGIN: ${{ vars.EDGE_NAKAMA_LUMARUSH_ORIGIN }}
+          EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN: ${{ vars.EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN }}
         run: |
           set -euo pipefail
           for var_name in EDGE_PROD_SITE_ORIGIN EDGE_STAGING_SITE_ORIGIN EDGE_PROD_API_ORIGIN EDGE_STAGING_API_ORIGIN EDGE_CONTROL_PLANE_ORIGIN EDGE_STAGING_CONTROL_PLANE_ORIGIN; do
             if [[ -z "${!var_name:-}" ]]; then
               echo "::error::Missing required repository variable: ${var_name}"
               exit 1
+            fi
+          done
+
+          for var_name in EDGE_NAKAMA_LUMARUSH_ORIGIN EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN; do
+            if [[ -z "${!var_name:-}" ]]; then
+              echo "::warning::Optional repository variable not set: ${var_name}"
             fi
           done
 
@@ -58,6 +66,8 @@ jobs:
           EDGE_STAGING_API_ORIGIN: ${{ vars.EDGE_STAGING_API_ORIGIN }}
           EDGE_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_CONTROL_PLANE_ORIGIN }}
           EDGE_STAGING_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_STAGING_CONTROL_PLANE_ORIGIN }}
+          EDGE_NAKAMA_LUMARUSH_ORIGIN: ${{ vars.EDGE_NAKAMA_LUMARUSH_ORIGIN }}
+          EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN: ${{ vars.EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN }}
         run: |
           set -euo pipefail
           if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
@@ -65,11 +75,23 @@ jobs:
             exit 1
           fi
 
-          wrangler deploy \
-            --config cloudflare/edge-router/wrangler.toml \
-            --var "PROD_SITE_ORIGIN:${EDGE_PROD_SITE_ORIGIN}" \
-            --var "STAGING_SITE_ORIGIN:${EDGE_STAGING_SITE_ORIGIN}" \
-            --var "PROD_API_ORIGIN:${EDGE_PROD_API_ORIGIN}" \
-            --var "STAGING_API_ORIGIN:${EDGE_STAGING_API_ORIGIN}" \
-            --var "CONTROL_PLANE_ORIGIN:${EDGE_CONTROL_PLANE_ORIGIN}" \
+          deploy_args=(
+            --config cloudflare/edge-router/wrangler.toml
+            --var "PROD_SITE_ORIGIN:${EDGE_PROD_SITE_ORIGIN}"
+            --var "STAGING_SITE_ORIGIN:${EDGE_STAGING_SITE_ORIGIN}"
+            --var "PROD_API_ORIGIN:${EDGE_PROD_API_ORIGIN}"
+            --var "STAGING_API_ORIGIN:${EDGE_STAGING_API_ORIGIN}"
+            --var "CONTROL_PLANE_ORIGIN:${EDGE_CONTROL_PLANE_ORIGIN}"
             --var "STAGING_CONTROL_PLANE_ORIGIN:${EDGE_STAGING_CONTROL_PLANE_ORIGIN}"
+          )
+
+          if [[ -n "${EDGE_NAKAMA_LUMARUSH_ORIGIN:-}" ]]; then
+            deploy_args+=(--var "NAKAMA_LUMARUSH_ORIGIN:${EDGE_NAKAMA_LUMARUSH_ORIGIN}")
+          fi
+
+          if [[ -n "${EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN:-}" ]]; then
+            deploy_args+=(--var "NAKAMA_COLOR_CRUNCH_ORIGIN:${EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN}")
+          fi
+
+          wrangler deploy \
+            "${deploy_args[@]}"

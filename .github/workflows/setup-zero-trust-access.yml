@@ -1,0 +1,76 @@
+name: Setup Zero Trust Access
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Preview mode (no writes)"
+        required: false
+        type: boolean
+        default: false
+      allowed_email_domain:
+        description: "Allowed email domain for protected paths"
+        required: false
+        type: string
+        default: "terapixel.games"
+      idp_type:
+        description: "Cloudflare IdP type"
+        required: false
+        type: choice
+        options:
+          - google-apps
+          - google
+        default: google-apps
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - domain: "terapixel.games/admin"
+            app_name: "TeraPixel Admin"
+            policy_name: "TeraPixel Admin - Workspace Only"
+          - domain: "terapixel.games/staging"
+            app_name: "TeraPixel Staging"
+            policy_name: "TeraPixel Staging - Workspace Only"
+          - domain: "terapixel.games/nakama/lumarush/console"
+            app_name: "LumaRush Nakama Console"
+            policy_name: "LumaRush Nakama Console - Workspace Only"
+          - domain: "terapixel.games/nakama/color-crunch/console"
+            app_name: "Color Crunch Nakama Console"
+            policy_name: "Color Crunch Nakama Console - Workspace Only"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Configure Cloudflare Access app and policy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_ACCESS }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_APPS_DOMAIN: ${{ vars.GOOGLE_APPS_DOMAIN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          ACCESS_APP_DOMAIN: ${{ matrix.app.domain }}
+          ACCESS_ALLOWED_EMAIL_DOMAIN: ${{ inputs.allowed_email_domain }}
+          ACCESS_IDP_TYPE: ${{ inputs.idp_type }}
+          ACCESS_APP_NAME: ${{ matrix.app.app_name }}
+          ACCESS_IDP_NAME: "Google Workspace"
+          ACCESS_POLICY_NAME: ${{ matrix.app.policy_name }}
+          ACCESS_POLICY_DECISION: "allow"
+          ACCESS_SESSION_DURATION: "12h"
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing CLOUDFLARE_API_TOKEN_ACCESS or CLOUDFLARE_ACCOUNT_ID secret."
+            exit 1
+          fi
+          bash scripts/cloudflare/setup-admin-access.sh

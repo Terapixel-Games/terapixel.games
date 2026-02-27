@@ -10,6 +10,8 @@ Worker route scope:
 ## Routing Table
 
 - `/api/*` -> `EDGE_PROD_API_ORIGIN`
+- `/nakama/lumarush/*` -> `EDGE_NAKAMA_LUMARUSH_ORIGIN`
+- `/nakama/color-crunch/*` -> `EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN`
 - `/v1/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN`
 - `/staging/api/*` -> `EDGE_STAGING_API_ORIGIN`
 - `/admin*` -> `EDGE_CONTROL_PLANE_ORIGIN` (production control-plane admin UI/API)
@@ -19,7 +21,7 @@ Worker route scope:
 - everything else -> `EDGE_PROD_SITE_ORIGIN`
 
 Caching policy:
-- `/staging/*`, `/staging/admin*`, and API routes are returned with `Cache-Control: no-store` to avoid stale rehearsal artifacts.
+- `/staging/*`, `/staging/admin*`, `/nakama/*`, and API routes are returned with `Cache-Control: no-store` to avoid stale artifacts.
 
 The Worker route is configured in:
 - `cloudflare/edge-router/wrangler.toml`
@@ -40,6 +42,8 @@ Repository variables:
 - `EDGE_STAGING_API_ORIGIN` (staging terapixel-platform endpoint, e.g. `https://terapixel-control-plane-xxxxx-uc.a.run.app`)
 - `EDGE_CONTROL_PLANE_ORIGIN` (production control-plane admin endpoint)
 - `EDGE_STAGING_CONTROL_PLANE_ORIGIN` (staging control-plane admin endpoint)
+- `EDGE_NAKAMA_LUMARUSH_ORIGIN` (optional; LumaRush Nakama origin)
+- `EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN` (optional; Color Crunch Nakama origin)
 
 ## Deploy
 
@@ -54,7 +58,9 @@ wrangler deploy --config cloudflare/edge-router/wrangler.toml \
   --var "PROD_API_ORIGIN:https://<prod-api-origin>" \
   --var "STAGING_API_ORIGIN:https://<staging-api-origin>" \
   --var "CONTROL_PLANE_ORIGIN:https://<prod-control-plane-origin>" \
-  --var "STAGING_CONTROL_PLANE_ORIGIN:https://<staging-control-plane-origin>"
+  --var "STAGING_CONTROL_PLANE_ORIGIN:https://<staging-control-plane-origin>" \
+  --var "NAKAMA_LUMARUSH_ORIGIN:https://<lumarush-nakama-origin>" \
+  --var "NAKAMA_COLOR_CRUNCH_ORIGIN:https://<color-crunch-nakama-origin>"
 ```
 
 ## Verification
@@ -67,6 +73,8 @@ curl -I https://www.terapixel.games/api/health
 curl -I https://www.terapixel.games/v1/admin/me
 curl -I https://www.terapixel.games/staging/api/health
 curl -I https://www.terapixel.games/admin
+curl -I https://www.terapixel.games/nakama/lumarush/healthcheck
+curl -I https://www.terapixel.games/nakama/color-crunch/healthcheck
 curl -I https://www.terapixel.games/_edge/health
 ```
 
@@ -74,5 +82,6 @@ Expected:
 - `/_edge/health` returns JSON from the Worker.
 - `/staging/` serves staging site content from GitHub Pages origin.
 - `/api/*` and `/staging/api/*` are proxied to prod/staging platform endpoints.
+- `/nakama/lumarush/*` and `/nakama/color-crunch/*` are proxied to game Nakama services.
 - `/admin*` is proxied to production control-plane and protected by Cloudflare Access.
 - `/staging/admin*` is proxied to staging control-plane.

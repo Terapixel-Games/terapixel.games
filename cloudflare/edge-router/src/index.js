@@ -31,7 +31,45 @@ function shouldAppendSlash(pathname) {
   return !pathname.split("/").pop().includes(".");
 }
 
+function resolveNakamaRoute(pathname) {
+  const routes = [
+    {
+      prefix: "/nakama/lumarush",
+      target: "NAKAMA_LUMARUSH_ORIGIN",
+      route: "nakama-lumarush",
+    },
+    {
+      prefix: "/nakama/color-crunch",
+      target: "NAKAMA_COLOR_CRUNCH_ORIGIN",
+      route: "nakama-color-crunch",
+    },
+    {
+      prefix: "/nakama/colorcrunch",
+      target: "NAKAMA_COLOR_CRUNCH_ORIGIN",
+      route: "nakama-color-crunch",
+    },
+  ];
+
+  for (const entry of routes) {
+    if (hasPrefix(pathname, entry.prefix)) {
+      return {
+        target: entry.target,
+        pathname: stripPrefix(pathname, entry.prefix),
+        noStore: true,
+        route: entry.route,
+      };
+    }
+  }
+
+  return null;
+}
+
 function resolveRoute(pathname) {
+  const nakamaRoute = resolveNakamaRoute(pathname);
+  if (nakamaRoute) {
+    return nakamaRoute;
+  }
+
   if (hasPrefix(pathname, "/staging/v1/admin")) {
     return {
       target: "STAGING_CONTROL_PLANE_ORIGIN",
