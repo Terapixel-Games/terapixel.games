@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
 
@@ -41,6 +41,12 @@ jobs:
           EDGE_STAGING_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_STAGING_CONTROL_PLANE_ORIGIN }}
           EDGE_NAKAMA_LUMARUSH_ORIGIN: ${{ vars.EDGE_NAKAMA_LUMARUSH_ORIGIN }}
           EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN: ${{ vars.EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN }}
+          EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN: ${{ vars.EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN }}
+          EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN: ${{ vars.EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN }}
+          EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN: ${{ vars.EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN }}
+          EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN: ${{ vars.EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN }}
+          EDGE_ORIGIN_AUTH_SECRET_PROD: ${{ secrets.EDGE_ORIGIN_AUTH_SECRET_PROD }}
+          EDGE_ORIGIN_AUTH_SECRET_STAGING: ${{ secrets.EDGE_ORIGIN_AUTH_SECRET_STAGING }}
         run: |
           set -euo pipefail
           for var_name in EDGE_PROD_SITE_ORIGIN EDGE_STAGING_SITE_ORIGIN EDGE_PROD_API_ORIGIN EDGE_STAGING_API_ORIGIN EDGE_CONTROL_PLANE_ORIGIN EDGE_STAGING_CONTROL_PLANE_ORIGIN; do
@@ -49,10 +55,17 @@ jobs:
               exit 1
             fi
           done
+          for secret_name in EDGE_ORIGIN_AUTH_SECRET_PROD EDGE_ORIGIN_AUTH_SECRET_STAGING; do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Missing required repository secret: ${secret_name}"
+              exit 1
+            fi
+          done
 
-          for var_name in EDGE_NAKAMA_LUMARUSH_ORIGIN EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN; do
+          for var_name in EDGE_NAKAMA_LUMARUSH_ORIGIN EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN; do
             if [[ -z "${!var_name:-}" ]]; then
-              echo "::warning::Optional repository variable not set: ${var_name}"
+              echo "::error::Missing required repository variable: ${var_name}"
+              exit 1
             fi
           done
 
@@ -68,12 +81,21 @@ jobs:
           EDGE_STAGING_CONTROL_PLANE_ORIGIN: ${{ vars.EDGE_STAGING_CONTROL_PLANE_ORIGIN }}
           EDGE_NAKAMA_LUMARUSH_ORIGIN: ${{ vars.EDGE_NAKAMA_LUMARUSH_ORIGIN }}
           EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN: ${{ vars.EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN }}
+          EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN: ${{ vars.EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN }}
+          EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN: ${{ vars.EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN }}
+          EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN: ${{ vars.EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN }}
+          EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN: ${{ vars.EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN }}
+          EDGE_ORIGIN_AUTH_SECRET_PROD: ${{ secrets.EDGE_ORIGIN_AUTH_SECRET_PROD }}
+          EDGE_ORIGIN_AUTH_SECRET_STAGING: ${{ secrets.EDGE_ORIGIN_AUTH_SECRET_STAGING }}
         run: |
           set -euo pipefail
           if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
             echo "::error::Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID."
             exit 1
           fi
+
+          printf '%s' "${EDGE_ORIGIN_AUTH_SECRET_PROD}" | wrangler secret put ORIGIN_AUTH_SECRET_PROD --config cloudflare/edge-router/wrangler.toml
+          printf '%s' "${EDGE_ORIGIN_AUTH_SECRET_STAGING}" | wrangler secret put ORIGIN_AUTH_SECRET_STAGING --config cloudflare/edge-router/wrangler.toml
 
           deploy_args=(
             --config cloudflare/edge-router/wrangler.toml
@@ -91,6 +113,22 @@ jobs:
 
           if [[ -n "${EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN:-}" ]]; then
             deploy_args+=(--var "NAKAMA_COLOR_CRUNCH_ORIGIN:${EDGE_NAKAMA_COLOR_CRUNCH_ORIGIN}")
+          fi
+
+          if [[ -n "${EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN:-}" ]]; then
+            deploy_args+=(--var "NAKAMA_SPEEDSOLITAIRE_ORIGIN:${EDGE_NAKAMA_SPEEDSOLITAIRE_ORIGIN}")
+          fi
+
+          if [[ -n "${EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN:-}" ]]; then
+            deploy_args+=(--var "STAGING_NAKAMA_LUMARUSH_ORIGIN:${EDGE_STAGING_NAKAMA_LUMARUSH_ORIGIN}")
+          fi
+
+          if [[ -n "${EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN:-}" ]]; then
+            deploy_args+=(--var "STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN:${EDGE_STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN}")
+          fi
+
+          if [[ -n "${EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN:-}" ]]; then
+            deploy_args+=(--var "STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN:${EDGE_STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN}")
           fi
 
           wrangler deploy \
