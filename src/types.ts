@@ -15,5 +15,6 @@ export type Game = {
   faq?: GameFaq[];
   fullScreenUrl: string | null;
   embedUrl: string | null;
+  embedOrientation?: 'landscape' | 'portrait';
   isComingSoon?: boolean;
 };
