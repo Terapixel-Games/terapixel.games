@@ -90,6 +90,7 @@ jobs:
             "--region=${GCP_REGION}"
             "--platform=managed"
             "--source=."
+            "--build-service-account=projects/${GCP_PROJECT_ID}/serviceAccounts/${GCP_SERVICE_ACCOUNT}"
             "--quiet"
           )
 
