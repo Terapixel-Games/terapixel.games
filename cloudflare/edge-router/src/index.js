@@ -31,8 +31,58 @@ function shouldAppendSlash(pathname) {
   return !pathname.split("/").pop().includes(".");
 }
 
+function resolveTypoRedirect(pathname) {
+  const typoAliases = [
+    {
+      from: "/play/speedsolitair",
+      to: "/play/speedsolitaire",
+    },
+    {
+      from: "/staging/play/speedsolitair",
+      to: "/staging/play/speedsolitaire",
+    },
+  ];
+
+  for (const alias of typoAliases) {
+    if (!hasPrefix(pathname, alias.from)) {
+      continue;
+    }
+
+    const suffix = stripPrefix(pathname, alias.from);
+    const mappedSuffix = suffix === "/" ? (pathname.endsWith("/") ? "/" : "") : suffix;
+    return `${alias.to}${mappedSuffix}`;
+  }
+
+  return "";
+}
+
 function resolveNakamaRoute(pathname) {
   const routes = [
+    {
+      prefix: "/staging/nakama/lumarush",
+      target: "STAGING_NAKAMA_LUMARUSH_ORIGIN",
+      route: "staging-nakama-lumarush",
+    },
+    {
+      prefix: "/staging/nakama/color-crunch",
+      target: "STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN",
+      route: "staging-nakama-color-crunch",
+    },
+    {
+      prefix: "/staging/nakama/colorcrunch",
+      target: "STAGING_NAKAMA_COLOR_CRUNCH_ORIGIN",
+      route: "staging-nakama-color-crunch",
+    },
+    {
+      prefix: "/staging/nakama/speedsolitaire",
+      target: "STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN",
+      route: "staging-nakama-speedsolitaire",
+    },
+    {
+      prefix: "/staging/nakama/speed-solitaire",
+      target: "STAGING_NAKAMA_SPEEDSOLITAIRE_ORIGIN",
+      route: "staging-nakama-speedsolitaire",
+    },
     {
       prefix: "/nakama/lumarush",
       target: "NAKAMA_LUMARUSH_ORIGIN",
@@ -47,6 +97,16 @@ function resolveNakamaRoute(pathname) {
       prefix: "/nakama/colorcrunch",
       target: "NAKAMA_COLOR_CRUNCH_ORIGIN",
       route: "nakama-color-crunch",
+    },
+    {
+      prefix: "/nakama/speedsolitaire",
+      target: "NAKAMA_SPEEDSOLITAIRE_ORIGIN",
+      route: "nakama-speedsolitaire",
+    },
+    {
+      prefix: "/nakama/speed-solitaire",
+      target: "NAKAMA_SPEEDSOLITAIRE_ORIGIN",
+      route: "nakama-speedsolitaire",
     },
   ];
 
@@ -128,7 +188,7 @@ function resolveRoute(pathname) {
     return {
       target: "CONTROL_PLANE_ORIGIN",
       pathname,
-      noStore: false,
+      noStore: true,
       route: "control-plane-admin",
     };
   }
@@ -155,9 +215,31 @@ function applyCachePolicy(response, noStore) {
   });
 }
 
-function makeRequest(request, upstreamUrl, routeName) {
+function routeRequiresOriginSecret(route) {
+  return (
+    route.target === "PROD_API_ORIGIN" ||
+    route.target === "STAGING_API_ORIGIN" ||
+    route.target === "CONTROL_PLANE_ORIGIN" ||
+    route.target === "STAGING_CONTROL_PLANE_ORIGIN"
+  );
+}
+
+function resolveOriginSecret(route, env) {
+  if (!routeRequiresOriginSecret(route)) {
+    return "";
+  }
+  if (route.target === "STAGING_API_ORIGIN" || route.target === "STAGING_CONTROL_PLANE_ORIGIN") {
+    return String(env.ORIGIN_AUTH_SECRET_STAGING || "");
+  }
+  return String(env.ORIGIN_AUTH_SECRET_PROD || "");
+}
+
+function makeRequest(request, upstreamUrl, routeName, originSecret) {
   const headers = new Headers(request.headers);
   headers.set("x-terapixel-edge-route", routeName);
+  if (originSecret) {
+    headers.set("x-terapixel-origin-secret", originSecret);
+  }
 
   return new Request(upstreamUrl, {
     method: request.method,
@@ -175,6 +257,13 @@ export default {
         ok: true,
         service: "terapixel-edge-router",
       });
+    }
+
+    const typoRedirectPath = resolveTypoRedirect(requestUrl.pathname);
+    if (typoRedirectPath) {
+      const redirectUrl = new URL(requestUrl.toString());
+      redirectUrl.pathname = typoRedirectPath;
+      return Response.redirect(redirectUrl.toString(), 301);
     }
 
     const route = resolveRoute(requestUrl.pathname);
@@ -196,7 +285,8 @@ export default {
     upstreamUrl.pathname = upstreamPath;
     upstreamUrl.search = requestUrl.search;
 
-    const upstreamRequest = makeRequest(request, upstreamUrl.toString(), route.route);
+    const originSecret = resolveOriginSecret(route, env);
+    const upstreamRequest = makeRequest(request, upstreamUrl.toString(), route.route, originSecret);
     const upstreamResponse = await fetch(
       upstreamRequest,
       route.route.endsWith("api") ? { cf: { cacheTtl: 0, cacheEverything: false } } : undefined,
