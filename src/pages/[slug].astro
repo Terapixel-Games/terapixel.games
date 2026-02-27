@@ -12,11 +12,10 @@ export function getStaticPaths() {
 }
 
 const { game, allGames } = Astro.props as { game: Game; allGames: Game[] };
-const isStagingPath = Astro.url.pathname.startsWith('/staging/');
 const mapPlayableUrl = (value: string | null): string | null => {
   if (!value) return null;
-  if (isStagingPath && value.startsWith('/play/')) {
-    return `/staging${value}`;
+  if (value.startsWith('/play/')) {
+    return `../play/${value.slice('/play/'.length)}`;
   }
   return value;
 };
