@@ -22,6 +22,15 @@ function parseOrigin(origin) {
   }
 }
 
+function shouldAppendSlash(pathname) {
+  if (pathname === "/" || pathname.endsWith("/")) {
+    return false;
+  }
+
+  // Treat extension-like paths as files, not routes.
+  return !pathname.split("/").pop().includes(".");
+}
+
 function resolveRoute(pathname) {
   if (hasPrefix(pathname, "/staging/v1/admin")) {
     return {
@@ -141,7 +150,10 @@ export default {
       return new Response(`Invalid origin URL in binding: ${route.target}`, { status: 500 });
     }
 
-    const upstreamPath = joinPath(parsedOrigin.pathname, route.pathname);
+    const normalizedPathname =
+      route.target === "PROD_SITE_ORIGIN" && shouldAppendSlash(route.pathname) ? `${route.pathname}/` : route.pathname;
+
+    const upstreamPath = joinPath(parsedOrigin.pathname, normalizedPathname);
     const upstreamUrl = new URL(parsedOrigin.origin);
     upstreamUrl.pathname = upstreamPath;
     upstreamUrl.search = requestUrl.search;
