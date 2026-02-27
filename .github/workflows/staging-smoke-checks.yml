@@ -1,0 +1,70 @@
+name: Staging Smoke Checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-smoke-checks
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public and staging routes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          failures=0
+
+          check_status() {
+            local url="$1"
+            local allowed_csv="$2"
+            local code
+            code="$(curl -sS -o /dev/null -w "%{http_code}" "${url}")"
+            echo "${code} ${url} (allowed: ${allowed_csv})"
+
+            local ok=1
+            IFS=',' read -r -a allowed_codes <<< "${allowed_csv}"
+            for allowed in "${allowed_codes[@]}"; do
+              if [[ "${code}" == "${allowed}" ]]; then
+                ok=0
+                break
+              fi
+            done
+
+            if [[ "${ok}" -ne 0 ]]; then
+              echo "::error::Unexpected status ${code} for ${url}. Allowed: ${allowed_csv}"
+              failures=$((failures + 1))
+            fi
+          }
+
+          check_status "https://terapixel.games/_edge/health" "200"
+          check_status "https://terapixel.games/play/lumarush/" "200"
+          check_status "https://terapixel.games/play/color-crunch/" "200"
+          check_status "https://terapixel.games/play/speedsolitaire/" "200"
+
+          check_status "https://terapixel.games/nakama/lumarush/healthcheck" "200"
+          check_status "https://terapixel.games/nakama/color-crunch/healthcheck" "200"
+          check_status "https://terapixel.games/nakama/speedsolitaire/healthcheck" "200"
+
+          # Staging routes are Access-gated, so 302 is expected outside Access auth.
+          check_status "https://terapixel.games/staging/play/lumarush/" "302,200"
+          check_status "https://terapixel.games/staging/play/color-crunch/" "302,200"
+          check_status "https://terapixel.games/staging/play/speedsolitaire/" "302,200"
+          check_status "https://terapixel.games/staging/nakama/lumarush/healthcheck" "302,200"
+          check_status "https://terapixel.games/staging/nakama/color-crunch/healthcheck" "302,200"
+          check_status "https://terapixel.games/staging/nakama/speedsolitaire/healthcheck" "302,200"
+
+          if [[ "${failures}" -gt 0 ]]; then
+            echo "Smoke checks failed: ${failures}"
+            exit 1
+          fi
+
+          echo "Smoke checks passed."

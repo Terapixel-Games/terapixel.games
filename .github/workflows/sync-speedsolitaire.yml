@@ -1,18 +1,18 @@
-name: Sync LumaRush Build
+name: Sync SpeedSolitaire Build
 
 on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "LumaRush release tag to sync (for example: v1.2.3)"
+        description: "SpeedSolitaire release tag to sync (for example: v1.2.3)"
         required: false
         default: ""
       release_asset:
-        description: "LumaRush release asset name (optional)"
+        description: "SpeedSolitaire release asset name (optional)"
         required: false
         default: ""
   repository_dispatch:
-    types: [lumarush_main_updated]
+    types: [speedsolitaire_main_updated]
 
 concurrency:
   group: sync-web-builds-main
@@ -38,7 +38,7 @@ jobs:
           RELEASE_ASSET="${{ github.event.client_payload.release_asset }}"
 
           if [ -z "${SOURCE_REPO}" ]; then
-            SOURCE_REPO="Terapixel-Games/LumaRush"
+            SOURCE_REPO="Terapixel-Games/SpeedSolitaire"
           fi
 
           if [ -z "${RELEASE_TAG}" ]; then
@@ -47,10 +47,6 @@ jobs:
 
           if [ -z "${RELEASE_ASSET}" ]; then
             RELEASE_ASSET="${{ inputs.release_asset }}"
-          fi
-          if [ -z "${RELEASE_ASSET}" ] && [ -n "${RELEASE_TAG}" ]; then
-            VERSION="${RELEASE_TAG#v}"
-            RELEASE_ASSET="lumarush-web-${VERSION}.zip"
           fi
 
           echo "source_repo=${SOURCE_REPO}" >> "$GITHUB_OUTPUT"
@@ -64,10 +60,10 @@ jobs:
       source_repo: ${{ needs.resolve.outputs.source_repo }}
       release_tag: ${{ needs.resolve.outputs.release_tag }}
       release_asset: ${{ needs.resolve.outputs.release_asset }}
-      destination_dir: public/play/lumarush
-      game_slug: lumarush
-      game_play_path: lumarush
+      destination_dir: public/play/speedsolitaire
+      game_slug: speedsolitaire
+      game_play_path: speedsolitaire
       target_branch: main
-      commit_message: "sync: update LumaRush web build"
+      commit_message: "sync: update SpeedSolitaire web build"
     secrets:
-      UPSTREAM_RELEASE_READ_TOKEN: ${{ secrets.LUMARUSH_RELEASE_READ_TOKEN }}
+      UPSTREAM_RELEASE_READ_TOKEN: ${{ secrets.SPEEDSOLITAIRE_RELEASE_READ_TOKEN }}

@@ -22,16 +22,13 @@ permissions:
   contents: write
 
 jobs:
-  sync:
+  resolve:
     runs-on: ubuntu-latest
-
+    outputs:
+      source_repo: ${{ steps.vars.outputs.source_repo }}
+      release_tag: ${{ steps.vars.outputs.release_tag }}
+      release_asset: ${{ steps.vars.outputs.release_asset }}
     steps:
-      - name: Checkout terapixel.games
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
       - name: Resolve payload values
         id: vars
         shell: bash
@@ -40,120 +37,37 @@ jobs:
           RELEASE_TAG="${{ github.event.client_payload.release_tag }}"
           RELEASE_ASSET="${{ github.event.client_payload.release_asset }}"
 
-          if [ -z "$SOURCE_REPO" ]; then
-            SOURCE_REPO="TeraPixelGames/color_crunch"
+          if [ -z "${SOURCE_REPO}" ]; then
+            SOURCE_REPO="Terapixel-Games/color_crunch"
           fi
 
-          if [ -z "$RELEASE_TAG" ]; then
+          if [ -z "${RELEASE_TAG}" ]; then
             RELEASE_TAG="${{ inputs.release_tag }}"
           fi
 
-          if [ -z "$RELEASE_TAG" ]; then
-            LATEST_JSON=$(curl -sS \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${SOURCE_REPO}/releases/latest")
-            RELEASE_TAG=$(LATEST_JSON="$LATEST_JSON" python -c "import json,os; print(json.loads(os.environ.get('LATEST_JSON','{}')).get('tag_name',''))")
-          fi
-
-          if [ -z "$RELEASE_ASSET" ]; then
+          if [ -z "${RELEASE_ASSET}" ]; then
             RELEASE_ASSET="${{ inputs.release_asset }}"
           fi
-          if [ -z "$RELEASE_ASSET" ]; then
+          if [ -z "${RELEASE_ASSET}" ] && [ -n "${RELEASE_TAG}" ]; then
             VERSION="${RELEASE_TAG#v}"
             RELEASE_ASSET="color-crunch-web-${VERSION}.zip"
           fi
 
-          if [ -z "$RELEASE_TAG" ]; then
-            echo "Unable to resolve release tag"
-            exit 1
-          fi
+          echo "source_repo=${SOURCE_REPO}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_asset=${RELEASE_ASSET}" >> "$GITHUB_OUTPUT"
 
-          echo "source_repo=$SOURCE_REPO" >> "$GITHUB_OUTPUT"
-          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
-          echo "release_asset=$RELEASE_ASSET" >> "$GITHUB_OUTPUT"
-
-      - name: Download and extract Color Crunch release asset
-        shell: bash
-        env:
-          READ_TOKEN: ${{ secrets.COLOR_CRUNCH_RELEASE_READ_TOKEN }}
-        run: |
-          set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y unzip rsync
-
-          API_URL="https://api.github.com/repos/${{ steps.vars.outputs.source_repo }}/releases/tags/${{ steps.vars.outputs.release_tag }}"
-          AUTH_HEADER=()
-          if [ -n "${READ_TOKEN:-}" ]; then
-            AUTH_HEADER=(-H "Authorization: Bearer ${READ_TOKEN}")
-          fi
-
-          RELEASE_JSON=$(curl -fsSL "${AUTH_HEADER[@]}" \
-            -H "Accept: application/vnd.github+json" \
-            "$API_URL")
-          BROWSER_URL=$(RELEASE_JSON="$RELEASE_JSON" ASSET_NAME="${{ steps.vars.outputs.release_asset }}" python3 -c "import json, os; data = json.loads(os.environ.get('RELEASE_JSON', '{}')); asset = os.environ.get('ASSET_NAME', ''); print(next((a.get('browser_download_url', '') for a in data.get('assets', []) if a.get('name') == asset), ''))")
-
-          if [ -z "$BROWSER_URL" ]; then
-            echo "Release asset not found: ${{ steps.vars.outputs.release_asset }}"
-            exit 1
-          fi
-
-          curl -sS -L "${AUTH_HEADER[@]}" \
-            -o /tmp/color-crunch-web.zip \
-            "$BROWSER_URL"
-
-          rm -rf /tmp/color-crunch-build
-          mkdir -p /tmp/color-crunch-build
-          unzip -o /tmp/color-crunch-web.zip -d /tmp/color-crunch-build
-          test -f /tmp/color-crunch-build/build/web/index.html
-
-      - name: Sync Color Crunch build into public/play/color-crunch
-        shell: bash
-        run: |
-          mkdir -p public/play/color-crunch
-          rsync -a --delete "/tmp/color-crunch-build/build/web/" public/play/color-crunch/
-
-      - name: Set Color Crunch URLs to same-domain path
-        shell: bash
-        run: |
-          node <<'EOF'
-          const fs = require('fs');
-          const path = 'src/data/games.json';
-          const games = JSON.parse(fs.readFileSync(path, 'utf8'));
-          for (const game of games) {
-            if (game.slug === 'color-crunch') {
-              game.fullScreenUrl = '/play/color-crunch/';
-              game.embedUrl = '/play/color-crunch/';
-            }
-          }
-          fs.writeFileSync(path, JSON.stringify(games, null, 2) + '\n');
-          EOF
-
-      - name: Commit and push changes
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git diff --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          git add public/play/color-crunch src/data/games.json
-          git commit -m "sync: update Color Crunch web build"
-
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-
-            if [ "$attempt" -eq 3 ]; then
-              echo "Push failed after 3 attempts"
-              exit 1
-            fi
-
-            echo "Push rejected, rebasing onto origin/main and retrying (attempt $((attempt + 1)))"
-            git fetch origin main
-            git rebase origin/main
-          done
+  sync:
+    needs: resolve
+    uses: Terapixel-Games/ArcadeCore/.github/workflows/reusable-sync-consumer-web-build.yml@e2f8b44
+    with:
+      source_repo: ${{ needs.resolve.outputs.source_repo }}
+      release_tag: ${{ needs.resolve.outputs.release_tag }}
+      release_asset: ${{ needs.resolve.outputs.release_asset }}
+      destination_dir: public/play/color-crunch
+      game_slug: color-crunch
+      game_play_path: color-crunch
+      target_branch: main
+      commit_message: "sync: update Color Crunch web build"
+    secrets:
+      UPSTREAM_RELEASE_READ_TOKEN: ${{ secrets.COLOR_CRUNCH_RELEASE_READ_TOKEN }}
