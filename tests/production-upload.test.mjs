@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -37,4 +37,23 @@ test('production upload rejects private or injected keys, duplicate keys, creden
     assert.notEqual(result.status, 0);
     assert.doesNotMatch(result.stderr, /do-not-upload|password@example/);
   }
+});
+
+test('actual workflow generator supports public variables with trailing newlines without accepting injected keys', () => {
+  const workflow = readFileSync('.github/workflows/deploy-prod.yml', 'utf8');
+  const block = workflow.split('      - name: Prepare production build env file')[1].split('      - name:')[0].split('        run: |\n')[1];
+  const script = block.split('\n').map(line => line.slice(10)).join('\n');
+  const env = Object.fromEntries(config.trim().split('\n').map(line => {
+    const index = line.indexOf('=');
+    return [line.slice(0, index), line.slice(index + 1)];
+  }));
+  env.PUBLIC_TPX_IDENTITY_LOGOUT_METHOD += '\n';
+  env.PUBLIC_TPX_IDENTITY_HYDRATE_SESSION_ON_LOAD += '\n';
+  const directory = mkdtempSync(join(tmpdir(), 'tpx-workflow-env-'));
+  try {
+    assert.equal(spawnSync('bash', ['-c', script], { cwd: directory, env: { PATH: process.env.PATH, ...env } }).status, 0);
+    const generated = readFileSync(join(directory, '.env.production'), 'utf8');
+    assert.equal(check(generated, manifest).status, 0);
+    assert.notEqual(check(generated + '\nPRIVATE_KEY=do-not-upload\n', manifest).status, 0);
+  } finally { rmSync(directory, { recursive: true }); }
 });
