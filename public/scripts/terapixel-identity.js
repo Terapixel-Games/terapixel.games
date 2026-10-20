@@ -518,7 +518,10 @@
   window.TerapixelIdentity = api;
 
   function bindAuthUi() {
-    var openButton = document.getElementById("tpx-auth-open");
+    var openButtons = Array.from(document.querySelectorAll("[data-auth-open]"));
+    var emailLabel = document.getElementById("tpx-auth-email-label");
+    var returnFocus = null;
+    var background = [];
     var modal = document.getElementById("tpx-auth-modal");
     var closeButton = document.getElementById("tpx-auth-close");
     var emailInput = document.getElementById("tpx-auth-email");
@@ -526,9 +529,10 @@
     var logoutButton = document.getElementById("tpx-auth-logout");
     var statusText = document.getElementById("tpx-auth-status");
     var labelText = document.getElementById("tpx-auth-label");
+    var accountLink = document.getElementById("tpx-auth-account");
     var accountNavItem = document.getElementById("tpx-account-nav");
 
-    if (!openButton || !modal || !closeButton || !statusText || !labelText) {
+    if (!openButtons.length || !modal || !closeButton || !statusText || !labelText) {
       return;
     }
 
@@ -541,9 +545,6 @@
       }
       if (logoutButton) {
         logoutButton.disabled = isBusy;
-      }
-      if (closeButton) {
-        closeButton.disabled = isBusy;
       }
       if (emailInput) {
         emailInput.disabled = isBusy;
@@ -565,20 +566,26 @@
     }
 
     function openModal() {
+      returnFocus = document.activeElement;
       modal.classList.remove("hidden");
+      background = Array.from(document.querySelectorAll(".site-header, .site-main, .site-footer"))
+        .map(function (element) { return { element: element, inert: element.inert }; });
+      background.forEach(function (item) { item.element.inert = true; });
+      closeButton.focus();
     }
 
     function closeModal() {
-      if (isBusy) {
-        return;
-      }
       modal.classList.add("hidden");
+      background.forEach(function (item) { item.element.inert = item.inert; });
+      if (returnFocus && returnFocus.isConnected) returnFocus.focus();
     }
 
     function render(currentState) {
       var authed = !!(currentState && currentState.authenticated);
       labelText.textContent = formatStateLabel(currentState);
-      openButton.textContent = authed ? "Account" : "Login";
+      openButtons.forEach(function (button) { button.textContent = authed ? "Account" : "Login"; });
+      if (emailLabel) emailLabel.classList.toggle("hidden", authed);
+      if (accountLink) accountLink.classList.toggle("hidden", !authed);
       labelText.classList.toggle("hidden", !authed);
       if (accountNavItem) {
         accountNavItem.classList.toggle("hidden", !authed);
@@ -603,14 +610,30 @@
       }
     }
 
-    openButton.addEventListener("click", function () {
-      render(api.getState());
-      openModal();
-      if (emailInput && !api.getState().authenticated) {
-        emailInput.focus();
-      }
+    openButtons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        render(api.getState());
+        openModal();
+        if (emailInput && !api.getState().authenticated) {
+          emailInput.focus();
+        }
+      });
     });
 
+    modal.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeModal();
+      }
+      if (event.key === "Tab") {
+        var focusable = Array.from(modal.querySelectorAll("button, input, a[href], [tabindex]"))
+          .filter(function (element) { return !element.disabled && element.tabIndex >= 0 && element.getClientRects().length; });
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
     closeButton.addEventListener("click", closeModal);
     modal.addEventListener("click", function (event) {
       if (event.target === modal) {

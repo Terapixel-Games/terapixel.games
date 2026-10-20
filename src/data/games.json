@@ -85,41 +85,36 @@
   {
     "title": "LumaRush",
     "slug": "lumarush",
-    "genre": "Tap puzzle",
+    "genre": "Connected-color puzzle",
     "mood": "Pattern",
     "accent": "neon",
     "image": "/images/games/lumarush.jpg",
-    "seoIntro": "LumaRush is a fast-paced matching game about spotting the odd block and tapping the color that belongs with the surrounding pattern.",
-    "seoDetails": "LumaRush rewards quick pattern reading more than raw speed. Each round asks you to compare the center block with the blocks around it, find the matching color, and tap cleanly before the timer pressure breaks your focus.",
-    "seoHowToPlay": "Look at the surrounding blocks first, then tap the block or color that matches that pattern. The best runs come from fast recognition: scan the group, trust the match, and avoid random taps when the board starts moving quickly.",
+    "seoIntro": "LumaRush is a tap puzzle about clearing connected groups of matching colors.",
+    "seoDetails": "Tap a group of matching tiles connected horizontally or vertically to clear it. Tiles fall into the gaps and the board refills, creating new groups to spot.",
+    "seoHowToPlay": "Find at least three matching tiles joined along their edges, then tap or click any tile in that group. For your first move, look for a row of three matching colors and tap one of them; diagonal neighbors do not connect.",
     "seoFeatures": [
-      "Tap the block that matches the surrounding blocks",
-      "Read the whole pattern before committing",
-      "Build streaks by avoiding rushed mis-taps"
+      "Clear connected groups of matching colors",
+      "Watch tiles fall and refill the board",
+      "Find larger groups before committing"
     ],
-    "designNotes": "The trap in LumaRush is tapping the first bright block you notice. Strong runs come from checking the surrounding blocks, confirming the match, and keeping a steady tap rhythm as the patterns speed up.",
+    "designNotes": "Read the whole connected group before tapping. Clearing one group changes the neighboring tiles, so check the new board after each move.",
     "controls": [
-      "Tap or click the matching block",
-      "Use fullscreen if the board feels cramped",
-      "Restart quickly while the pattern rule is still fresh"
+      "Tap or click any tile in a connected matching group",
+      "Match at least three tiles connected horizontally or vertically"
     ],
     "playerTips": [
-      "Compare the target block against the surrounding blocks",
-      "Wait for a confirmed match instead of panic tapping",
-      "Use early rounds to lock into the visual rhythm"
+      "Look for edge-connected colors rather than diagonal matches",
+      "Check the board again after tiles fall",
+      "Compare nearby groups before choosing a move"
     ],
     "guideSections": [
       {
-        "heading": "Who LumaRush Is For",
-        "copy": "LumaRush fits players who like quick visual puzzles where every tap says whether they read the pattern correctly. A good session is about recognizing the matching block faster, staying calm under pressure, and starting another run with sharper eyes."
+        "heading": "Reading connected groups",
+        "copy": "Matching colors connect through shared edges. Start with a group of three or more and tap any member to clear the group."
       },
       {
-        "heading": "How to Build Consistency",
-        "copy": "The most reliable improvement comes from scanning the surrounding blocks before you tap. Players who confirm the match first usually last longer than players who chase the most obvious color on the board."
-      },
-      {
-        "heading": "When to Use Fullscreen",
-        "copy": "Fullscreen is recommended when the board feels cramped or when browser chrome distracts from the pattern. A larger play area makes the surrounding blocks easier to compare at a glance."
+        "heading": "After a clear",
+        "copy": "Tiles fall and new tiles refill the gaps. Recheck the new connections before your next tap."
       }
     ],
     "faq": [
@@ -221,51 +216,46 @@
   {
     "title": "Color Crunch",
     "slug": "color-crunch",
-    "genre": "Match puzzle",
+    "genre": "Swipe-and-merge puzzle",
     "mood": "Tactile",
     "accent": "citrus",
     "image": "/images/games/color-crunch.jpg",
-    "seoIntro": "Color Crunch is a color-matching puzzle game for players who enjoy speed, clarity, and satisfying pattern recognition.",
-    "seoDetails": "Color Crunch is a quick visual puzzle about seeing the board before you touch it. The satisfying runs come from spotting a strong color group, clearing it cleanly, and keeping the next move open.",
-    "seoHowToPlay": "Pause for a beat before the first move. Find the biggest useful color group, clear it, then look for the follow-up instead of tapping every match you see.",
+    "seoIntro": "Color Crunch is a 4×4 swipe-and-merge puzzle about combining equal tiles into higher levels.",
+    "seoDetails": "Slide the whole board in one direction. Equal-level tiles merge into the next level, and a successful move adds a new tile. Keep space open so the board has room to move.",
+    "seoHowToPlay": "Swipe up, down, left, or right, drag with the left mouse button, or use arrow keys or WASD. For a first merge, find two equal tiles in a row and slide toward that row’s edge so they meet.",
     "seoFeatures": [
-      "Scan the whole board before the first move",
-      "Keep useful color groups intact when possible",
-      "Use speed after you know the next match"
+      "Slide a 4×4 board in four directions",
+      "Merge equal-level tiles into higher levels",
+      "Keep empty spaces available for new tiles"
     ],
-    "designNotes": "The board punishes autopilot. If a move breaks a useful cluster, it may cost more than it clears. Build a simple scan pattern and let the faster moves come after the plan is obvious.",
+    "designNotes": "Each input moves the board as a whole. Plan where equal tiles will meet and where the new tile can leave space for another move.",
     "controls": [
-      "Use direct pointer or touch input for quick selections",
-      "Keep the browser zoom at a normal level so color groups remain readable",
-      "Use fullscreen if the play area feels cramped"
+      "Arrow keys or WASD slide the board",
+      "Swipe on touch screens, or hold the left mouse button and drag, then release"
     ],
     "playerTips": [
-      "Scan from large color groups to smaller cleanup moves",
-      "Avoid breaking useful clusters too early",
-      "Use failed rounds to learn which patterns slow you down"
+      "Line up equal-level tiles before sliding",
+      "Leave empty cells for new tiles",
+      "Check the whole board before choosing a direction"
     ],
     "guideSections": [
       {
-        "heading": "Who Color Crunch Is For",
-        "copy": "Color Crunch is for puzzle players who enjoy quick visual decisions more than long rule explanations. It works best as a focused break: scan the board, make a clean match, and learn from the patterns that slowed the previous round."
+        "heading": "Sliding the board",
+        "copy": "Every swipe moves all tiles toward one edge. Equal tiles that meet combine into a higher-level tile."
       },
       {
-        "heading": "Reading the Board",
-        "copy": "Start by looking for obvious color clusters, then check whether a smaller move creates a better follow-up. The strongest rounds usually come from preserving useful groups instead of clearing the first match you notice."
-      },
-      {
-        "heading": "Avoiding Common Mistakes",
-        "copy": "The easiest mistake is moving too quickly through the first few seconds and breaking the layout before you have a plan. Slow down just enough to identify the best group, then use speed once the route is clear."
+        "heading": "Keeping room to merge",
+        "copy": "Successful moves spawn a new tile. Preserve open cells and plan the next merge before filling the board."
       }
     ],
     "faq": [
       {
-        "question": "Is Color Crunch a puzzle game?",
-        "answer": "Yes. Color Crunch is a browser puzzle game based on quick visual matching."
+        "question": "How do I control Color Crunch?",
+        "answer": "Use arrow keys, WASD, a touch swipe, or a left-mouse drag to slide the 4×4 board."
       },
       {
-        "question": "Who should play Color Crunch?",
-        "answer": "It is a good fit for players who enjoy fast puzzle sessions and pattern recognition gameplay."
+        "question": "What is the goal?",
+        "answer": "Merge equal tiles into higher levels while keeping legal moves available."
       }
     ],
     "fullScreenUrl": "/play/color-crunch/",
@@ -331,51 +321,46 @@
   {
     "title": "Worm Breaker",
     "slug": "worm-breaker",
-    "genre": "Action challenge",
+    "genre": "Tunnel brickbreaker",
     "mood": "Sharp reflex",
     "accent": "signal",
     "image": "/images/games/worm-breaker.jpg",
-    "seoIntro": "Worm Breaker is an action browser game centered on timing, positioning, and staying one step ahead.",
-    "seoDetails": "Worm Breaker is a survival challenge where panic is the real enemy. You last longer by choosing safe space early, avoiding corners, and making one clean move instead of three desperate ones.",
-    "seoHowToPlay": "Keep your eyes on the next escape lane. Move before the route closes, stay out of traps, and use each failed run to name what caught you.",
+    "seoIntro": "Worm Breaker is a cylindrical tunnel brickbreaker with a paddle that rotates around the tunnel wall.",
+    "seoDetails": "Rotate the glowing paddle to rebound the ball into bricks deeper in the tunnel. Track the returning ball around the cylinder and bring the paddle into its path before it passes you.",
+    "seoHowToPlay": "Use Left/Right or A/D to rotate the paddle, or press and drag horizontally on a touch screen. Start by making a small rotation, then track the ball’s return and line up a rebound to send it back toward the bricks.",
     "seoFeatures": [
-      "Find the escape lane before it closes",
-      "Stay away from corners unless you already have a way out",
-      "Make one clean move instead of several panic corrections"
+      "Rotate a paddle around a cylindrical tunnel",
+      "Rebound the ball into tunnel bricks",
+      "Track the ball’s angle on its return"
     ],
-    "designNotes": "Worm Breaker is about controlled reactions more than constant movement. The safest runs come from reading the next pressure point early, then making one clean adjustment instead of a chain of panic moves.",
+    "designNotes": "The paddle moves around the tunnel rather than across a flat screen. Watch the ball’s angular position as it returns and adjust early to meet it.",
     "controls": [
-      "Use arrow keys or WASD-style movement controls to stay out of danger",
-      "Keep the play area in fullscreen when practicing longer survival runs",
-      "Restart quickly after a collision so the timing pattern stays fresh"
+      "Left/Right arrow keys or A/D rotate the paddle",
+      "On touch screens, press and drag horizontally; release to stop steering"
     ],
     "playerTips": [
-      "Watch the nearest escape lane before committing to a direction",
-      "Avoid drifting into corners unless the next route is already clear",
-      "Slow your decisions enough to make one clean move instead of several corrections"
+      "Follow the ball around the tunnel wall",
+      "Adjust the paddle before the ball reaches you",
+      "Use small corrections to line up a rebound"
     ],
     "guideSections": [
       {
-        "heading": "Who Worm Breaker Is For",
-        "copy": "Worm Breaker fits players who like short action challenges where every mistake is readable. It is not a long campaign; it is a focused survival loop for practicing reaction timing, spacing, and composure under pressure."
+        "heading": "Rotating the paddle",
+        "copy": "Use Left/Right or A/D, or horizontal touch dragging, to move the paddle around the cylinder."
       },
       {
-        "heading": "Reading Pressure",
-        "copy": "The important habit is to identify where danger is forming before it reaches the player. If you only react after the path closes, you are forced into sharp corrections. Better runs come from moving toward open space early."
-      },
-      {
-        "heading": "Improving Survival Time",
-        "copy": "Use each failed run to name the mistake: late turn, trapped route, overcorrection, or lost focus. That makes the next attempt specific and prevents repeated restarts from feeling random."
+        "heading": "Returning the ball",
+        "copy": "Meet the returning ball with the paddle to bounce it into the tunnel bricks. Missing below the paddle loses the ball."
       }
     ],
     "faq": [
       {
         "question": "What is the goal in Worm Breaker?",
-        "answer": "The goal is to survive longer by managing timing and movement under increasing pressure."
+        "answer": "Rebound the ball with a rotating paddle to break bricks inside a cylindrical tunnel."
       },
       {
-        "question": "Is Worm Breaker free on Terapixel Games?",
-        "answer": "Yes. Worm Breaker is intended to be accessible as a free browser game."
+        "question": "Which keyboard controls are supported?",
+        "answer": "Left/Right arrows and A/D rotate the paddle. Touch screens support horizontal dragging."
       }
     ],
     "fullScreenUrl": "/play/worm-breaker/",
