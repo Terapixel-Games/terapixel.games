@@ -34,7 +34,7 @@ const accountActive = normalizedPath === '/account';
         />
         <span class="brand-name">Terapixel Games</span>
       </a>
-      <button id="tpx-auth-open" type="button" class="auth-open">
+      <button id="tpx-auth-open" data-auth-open aria-haspopup="dialog" aria-controls="tpx-auth-modal" type="button" class="auth-open">
         Login
       </button>
     </div>
@@ -73,7 +73,8 @@ const accountActive = normalizedPath === '/account';
       <h2 id="tpx-auth-title">Terapixel Account</h2>
       <button id="tpx-auth-close" type="button" class="modal-close">Close</button>
     </div>
-    <p id="tpx-auth-status" class="modal-status">Enter email and continue to login.</p>
+    <p id="tpx-auth-status" class="modal-status" role="status">Enter email and continue to login.</p>
+    <label id="tpx-auth-email-label" for="tpx-auth-email">Email address</label>
     <input
       id="tpx-auth-email"
       type="email"
@@ -82,6 +83,7 @@ const accountActive = normalizedPath === '/account';
       class="modal-input"
     />
     <div class="modal-actions">
+      <a id="tpx-auth-account" href={withBasePath('/account')} class="btn btn-primary hidden">View Account</a>
       <button id="tpx-auth-submit" type="button" class="btn btn-primary">
         Continue Login
       </button>

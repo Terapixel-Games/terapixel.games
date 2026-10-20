@@ -58,7 +58,7 @@ const gameImageSrc = game.image.startsWith('/') ? withBasePath(game.image) : gam
           <span class="chip muted">Release Watch</span>
         )
       }
-      {isPlayable && <a href={detailHref} class="btn btn-secondary">Details</a>}
+      {isPlayable && <a href={`${detailHref}#game-info`} class="btn btn-secondary">Details</a>}
     </div>
   </div>
 </article>
