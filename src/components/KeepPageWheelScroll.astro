@@ -1,5 +1,6 @@
 <script>
   const attachedFrames = new WeakMap();
+  const wiredFrames = new WeakSet();
 
   const forwardWheelToPage = (event) => {
     if (!event.deltaY && !event.deltaX) return;
@@ -35,10 +36,14 @@
 
   const wireGameFrames = () => {
     document.querySelectorAll('[data-page-wheel-scroll] iframe').forEach((iframe) => {
+      if (wiredFrames.has(iframe)) return;
+      wiredFrames.add(iframe);
       attachWheelForwarding(iframe);
       iframe.addEventListener('load', () => attachWheelForwarding(iframe));
     });
   };
+
+  document.addEventListener('tpx:player-created', wireGameFrames);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wireGameFrames, { once: true });

@@ -1,0 +1,22 @@
+---
+import { withBasePath } from '../lib/site-paths';
+const { title, image, embedUrl } = Astro.props;
+---
+<div class="featured-player" data-featured-player data-game-url={embedUrl} data-game-title={title}>
+  <div class="featured-player-poster" data-player-poster>
+    <img src={image.startsWith('/') ? withBasePath(image) : image} alt="" fetchpriority="high" />
+    <div class="featured-player-invitation">
+      <p class="portal-kicker">Ready when you are</p>
+      <h2>{title}</h2>
+      <p>Play here when you’re ready. The game downloads only after you press Play.</p>
+      <button type="button" class="btn btn-primary" data-featured-play aria-controls="featured-game-frame">Play {title}</button>
+      <noscript><p>Enable JavaScript to play here, or browse the game library below.</p></noscript>
+    </div>
+  </div>
+  <div id="featured-game-frame" class="featured-player-frame" data-featured-frame></div>
+  <div class="featured-player-status hidden" data-featured-status-panel>
+    <p data-featured-status role="status" aria-live="polite" aria-atomic="true"></p>
+    <button type="button" class="btn btn-secondary" data-featured-retry>Retry game</button>
+  </div>
+</div>
+<script src={withBasePath('/scripts/featured-player.js')} defer></script>

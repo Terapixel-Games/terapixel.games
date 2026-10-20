@@ -1755,3 +1755,68 @@ body:has(.play-shell.is-game-first) .site-header {
     filter: brightness(1);
   }
 }
+
+/* Homepage stays game-first while downloads wait for a deliberate Play. */
+.featured-player {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.featured-player-poster {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  isolation: isolate;
+}
+.featured-player-poster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(3, 7, 13, 0.5), rgba(3, 7, 13, 0.94));
+  z-index: -1;
+}
+.play-frame-shell .featured-player-poster img {
+  z-index: -2;
+  opacity: 0.7;
+}
+.featured-player-invitation {
+  max-width: 32rem;
+  text-align: center;
+}
+.featured-player-invitation h2 {
+  color: var(--text);
+  font-size: clamp(2rem, 5vw, 4rem);
+  margin-block: 0.5rem;
+}
+.featured-player-invitation p { color: #c4d5df; }
+.featured-player-invitation .btn { margin-top: 0.75rem; }
+.featured-player-frame { position: relative; flex: 1; min-height: 0; }
+.featured-player-status {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  background: #0b1520;
+  border-top: 1px solid rgba(145, 203, 225, 0.28);
+}
+.featured-player-status p { flex: 1 1 18rem; margin: 0; color: #c4d5df; font-size: 0.9rem; }
+.featured-player-status .btn { flex-shrink: 0; }
+.featured-player[data-player-state='unsupported'] .featured-player-status {
+  margin: auto;
+  max-width: 36rem;
+  border: 1px solid rgba(145, 203, 225, 0.28);
+  border-radius: 1rem;
+}
+.portal-tool-button:disabled { opacity: 0.5; cursor: default; }
+.featured-player .hidden { display: none; }
+@media (max-width: 480px) {
+  .featured-player-status { padding: 0.6rem; }
+  .featured-player-status p { font-size: 0.8rem; }
+}
+.featured-player[data-player-state='unsupported'] .featured-player-frame { display: none; }

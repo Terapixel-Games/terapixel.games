@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import DeferredFeaturedPlayer from '../components/DeferredFeaturedPlayer.astro';
 import GameCard from '../components/GameCard.astro';
 import KeepPageWheelScroll from '../components/KeepPageWheelScroll.astro';
 import PlayerFullscreenController from '../components/PlayerFullscreenController.astro';
@@ -33,13 +34,7 @@ const isPrimaryPortrait = primaryGame.embedOrientation === 'portrait';
     <div class:list={['play-frame-shell', isPrimaryPortrait && 'is-portrait']} data-page-wheel-scroll>
       {
         primaryEmbedUrl ? (
-          <iframe
-            src={primaryEmbedUrl}
-            title={`${primaryGame.title} featured game`}
-            loading="eager"
-            allow="fullscreen"
-            allowfullscreen
-          />
+          <DeferredFeaturedPlayer title={primaryGame.title} image={primaryGame.image} embedUrl={primaryEmbedUrl} />
         ) : (
           <img src={withBasePath(primaryGame.image)} alt={primaryGame.title} />
         )
@@ -61,7 +56,7 @@ const isPrimaryPortrait = primaryGame.embedOrientation === 'portrait';
       <div class="portal-toolbar-actions">
         <button type="button" class="portal-tool-button" data-auth-open aria-haspopup="dialog" aria-controls="tpx-auth-modal">Login</button>
         {primaryEmbedUrl && (
-          <button type="button" class="portal-tool-button" data-player-fullscreen>
+          <button type="button" class="portal-tool-button" data-player-fullscreen disabled>
             Fullscreen
           </button>
         )}
