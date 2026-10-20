@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
-import { withBasePath } from '../lib/site-paths';
+import { addBuildVersion, withBasePath } from '../lib/site-paths';
 
 interface Props {
   title: string;
@@ -43,7 +43,7 @@ const identityConfigScript = `window.__TPX_AUTH_CONFIG = ${JSON.stringify({
   hydrateFromSessionOnLoad: identityHydrateSessionOnLoad
 })};`;
 const faviconUrl = withBasePath('/favicon.svg');
-const identityScriptUrl = withBasePath('/scripts/terapixel-identity.js');
+const identityScriptUrl = addBuildVersion(withBasePath('/scripts/terapixel-identity.js'), import.meta.env.PUBLIC_TPX_BUILD_ID);
 const privacyPolicyUrl = withBasePath('/privacy-policy');
 const aboutUrl = withBasePath('/about');
 const supportUrl = withBasePath('/support');
