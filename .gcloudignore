@@ -1,0 +1,9 @@
+.gcloudignore
+.git
+.gitignore
+#!include:.gitignore
+# Only the generated, validated PUBLIC_* build configuration is uploaded.
+.env*
+!.env.production
+# Never upload the temporary identity file created by GitHub's Google auth action.
+gha-creds-*.json
