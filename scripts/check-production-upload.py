@@ -15,6 +15,8 @@ KEYS = {
 def validate(config, manifest):
     values = {}
     for line in config.splitlines():
+        if not line.strip():
+            continue
         key, separator, value = line.partition("=")
         if not separator or key not in KEYS or key in values:
             raise ValueError("Build configuration must contain only the expected public keys, once each")
