@@ -79,6 +79,12 @@ jobs:
             printf 'PUBLIC_TPX_BUILD_ID=%s\n' "${PUBLIC_TPX_BUILD_ID:-}"
           } > .env.production
 
+      - name: Verify production source upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud meta list-files-for-upload . | python3 scripts/check-production-upload.py .env.production
+
       - name: Deploy production static site to Cloud Run
         id: deploy
         shell: bash
