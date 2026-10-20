@@ -97,3 +97,8 @@ test('Escape remains available while login is busy, without submitting a real lo
     assert.equal(document.activeElement, opener);
   } finally { dom.window.close(); }
 });
+
+
+test('identity script is versioned with the deployed build to avoid stale auth handlers', () => {
+  assert.match(read('src/layouts/BaseLayout.astro'), /identityScriptUrl = addBuildVersion\(withBasePath\('\/scripts\/terapixel-identity.js'\), import.meta.env.PUBLIC_TPX_BUILD_ID\)/);
+});
